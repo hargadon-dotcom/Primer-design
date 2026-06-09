@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gDNA Amplification Primer Design</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Inter:wght@400;500;600;700&display=swap');
+  :root{
+    --bg:#f4f6f8;--surface:#ffffff;--border:#dde2e8;--border-light:#eaecef;
+    --accent:#0e7c6b;--accent-light:#e6f4f1;--accent2:#c95b1e;--accent2-light:#fdf0ea;
+    --purple:#6d4fc2;--purple-light:#f0ecfb;--text:#1a2332;--text-mid:#4a5568;
+    --text-muted:#8a98a8;--red:#dc2626;--blue:#1d6fa4;--blue-light:#e8f2fb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding:2rem 2.5rem;font-size:14px;}
+  header{margin-bottom:2rem;padding-bottom:1rem;border-bottom:2px solid var(--border);display:flex;align-items:center;flex-wrap:wrap;gap:0.75rem;}
+  .header-left{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+  header h1{font-size:1.2rem;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:0.6rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;}
+  .tag-teal{background:var(--accent-light);color:var(--accent);}
+  .tag-purple{background:var(--purple-light);color:var(--purple);}
+  .tag-orange{background:var(--accent2-light);color:var(--accent2);}
+  .tag-blue{background:var(--blue-light);color:var(--blue);}
+  .section{margin-bottom:2rem;}
+  .section-head{display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;}
+  .section-head h2{font-size:0.8rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);}
+  .section-head::after{content:'';flex:1;height:1px;background:var(--border);}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.2rem;}
+  .field-label{font-size:0.7rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.45rem;display:flex;align-items:center;gap:0.4rem;}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+  .dot-teal{background:var(--accent);}.dot-orange{background:var(--accent2);}.dot-purple{background:var(--purple);}.dot-blue{background:var(--blue);}
+  textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.72rem;line-height:1.65;padding:0.75rem;resize:vertical;outline:none;transition:border-color 0.15s,box-shadow 0.15s;}
+  textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,124,107,0.1);}
+  textarea::placeholder{color:var(--text-muted);}
+  input[type=text]{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.75rem;padding:0.45rem 0.7rem;outline:none;width:100%;transition:border-color 0.15s;}
+  input[type=text]:focus{border-color:var(--accent);}
+  input[type=text]::placeholder{color:var(--text-muted);}
+  select{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.75rem;padding:0.45rem 0.7rem;outline:none;width:100%;cursor:pointer;}
+  select:focus{border-color:var(--accent);}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+  @media(max-width:760px){.two-col,.three-col{grid-template-columns:1fr;}}
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;padding:0.55rem 1.4rem;transition:filter 0.15s,transform 0.1s;}
+  .btn:hover{filter:brightness(1.07);transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn-teal{background:var(--accent);color:#fff;}.btn-purple{background:var(--purple);color:#fff;}
+  .btn-orange{background:var(--accent2);color:#fff;}.btn-blue{background:var(--blue);color:#fff;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-mid);}
+  .btn-ghost:hover{background:var(--bg);}.btn-dl{background:#1a2332;color:#fff;}
+  .btn-row{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-top:0.9rem;}
+  .num-group{display:inline-flex;align-items:center;gap:0.4rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.45rem 0.85rem;}
+  .num-group label{font-size:0.68rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;}
+  .num-group input[type=number]{background:transparent;border:none;outline:none;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.95rem;font-weight:600;width:55px;text-align:right;}
+  .num-group .unit{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-muted);}
+  .note{font-size:0.68rem;color:var(--text-muted);margin-top:0.4rem;font-family:'JetBrains Mono',monospace;}
+  .msg{font-family:'JetBrains Mono',monospace;font-size:0.72rem;border-radius:6px;padding:0.55rem 0.9rem;margin-bottom:1rem;display:none;}
+  .msg-error{color:var(--red);background:#fef2f2;border:1px solid #fecaca;}
+  .msg-warning{color:#b45309;background:#fffbeb;border:1px solid #fde68a;}
+  #results{display:none;}
+  .out-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .out-card-head{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.9rem;border-bottom:1px solid var(--border-light);}
+  .out-card-head .name{font-size:0.67rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
+  .name-teal{color:var(--accent);}.name-orange{color:var(--accent2);}.name-purple{color:var(--purple);}
+  .name-blue{color:var(--blue);}.name-green{color:#1a7a4a);}
+  .out-head-right{display:flex;align-items:center;gap:0.5rem;}
+  .bp-badge{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-muted);}
+  .copy-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.6rem;padding:2px 7px;border-radius:3px;cursor:pointer;transition:all 0.15s;}
+  .copy-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+  .primer-seq{font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;letter-spacing:0.04em;line-height:1.5;padding:0.75rem 0.9rem;background:var(--bg);word-break:break-all;white-space:pre-wrap;color:var(--text);min-height:52px;}
+  .primer-note{font-size:0.65rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;padding:0 0.9rem 0.5rem;}
+  .seq-part-body{color:var(--text);}
+  .seq-part-rs{color:#6d4fc2;font-weight:700;background:var(--purple-light);border-radius:2px;padding:0 1px;}
+  .seq-part-pad{color:#b45309;font-weight:700;background:#fffbeb;border-radius:2px;padding:0 1px;}
+  /* Stats bar */
+  .stats-bar{display:flex;flex-wrap:wrap;gap:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.7rem 1rem;margin-bottom:1rem;font-family:'JetBrains Mono',monospace;font-size:0.68rem;}
+  .sb-item{display:flex;gap:0.35rem;align-items:baseline;}
+  .sb-val{font-weight:700;font-size:0.9rem;}
+  .sb-val.c-teal{color:var(--accent);}.sb-val.c-orange{color:var(--accent2);}.sb-val.c-warn{color:var(--red);}
+  .sb-key{color:var(--text-muted);}
+  /* Library */
+  .lib-panel{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:0.85rem;margin-bottom:0.75rem;}
+  .lib-mode-row{display:flex;gap:0.5rem;margin-bottom:0.6rem;flex-wrap:wrap;}
+  .lib-mode-btn{background:transparent;border:1px solid var(--border);border-radius:4px;font-family:'Inter',sans-serif;font-size:0.7rem;font-weight:600;padding:3px 10px;cursor:pointer;color:var(--text-muted);transition:all 0.15s;}
+  .lib-mode-btn.active{background:var(--purple);border-color:var(--purple);color:#fff;}
+  .lib-content{display:none;}
+  .lib-content.visible{display:block;}
+  .lib-list-row{display:flex;gap:0.5rem;align-items:center;margin-bottom:0.35rem;}
+  .lib-list-row select{flex:1;}
+  .lib-entry-row{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.35rem;}
+  .lib-save-note{font-size:0.63rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-top:0.25rem;}
+  /* Tm */
+  .tm-card{background:#f8faff;border:1px solid #c7d9f5;border-radius:8px;padding:1.2rem;margin-bottom:1rem;}
+  .tm-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+  .tm-box{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.9rem;}
+  .tm-val{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--blue);}
+  .tm-label{font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.3rem;}
+  .tm-primer-disp{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-muted);margin-top:0.3rem;word-break:break-all;}
+  .tm-diff-ok{color:var(--accent);font-weight:700;}
+  .tm-diff-warn{color:var(--accent2);font-weight:700;}
+  /* Final summary */
+  .final-summary{background:#f0faf7;border:2px solid var(--accent);border-radius:8px;padding:1.2rem;margin-top:1rem;}
+  .final-summary-head{font-size:0.78rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+  /* Cleaner */
+  .cleaner-stats{display:flex;flex-wrap:wrap;gap:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.7rem 1rem;margin-top:0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.68rem;}
+  .cs-item{display:flex;gap:0.35rem;align-items:baseline;}
+  .cs-val{font-weight:700;font-size:0.85rem;color:var(--purple);}
+  .cs-val.cs-removed{color:var(--red);}
+  .cs-key{color:var(--text-muted);}
+  #cleaner-stats-row{display:none;}
+  .checkbox-label{display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;color:var(--text-mid);cursor:pointer;}
+  input[type=checkbox]{accent-color:var(--purple);width:13px;height:13px;}
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .dl-section{margin-top:2rem;padding-top:1.5rem;border-top:2px solid var(--border);display:flex;flex-direction:column;align-items:flex-end;gap:0.75rem;}
+  .gc-ok{color:var(--accent);font-weight:700;}
+  .gc-warn{color:var(--accent2);font-weight:700;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>gDNA Amplification Primer Design</h1>
+    <span class="tag tag-purple">DNA Cleaner</span>
+    <span class="tag tag-teal">Target Sequence</span>
+    <span class="tag tag-blue">Primer Designer</span>
+  </div>
+</header>
+
+<!-- ══ 1. DNA CLEANER ══ -->
+<div class="section">
+  <div class="section-head"><span class="tag tag-purple">1</span><h2>DNA Cleaner — ATGC only</h2></div>
+  <div class="two-col" style="margin-bottom:0.75rem;">
+    <div>
+      <div class="field-label"><span class="dot dot-purple"></span> Raw Input</div>
+      <textarea id="cleaner-input" rows="7" placeholder="Paste anything — FASTA headers, numbers, spaces, IUPAC codes, RNA (U)...&#10;Only A, T, G, C will survive."></textarea>
+    </div>
+    <div>
+      <div class="field-label"><span class="dot dot-purple"></span> Cleaned Output</div>
+      <div class="out-card">
+        <div class="out-card-head">
+          <span class="name name-purple" style="color:var(--purple);">ATGC Only</span>
+          <div class="out-head-right"><span class="bp-badge" id="cleaner-bp-label"></span><button class="copy-btn" id="cleaner-copy-btn" onclick="cleanerCopy()">copy</button></div>
+        </div>
+        <div class="primer-seq" id="cleaner-output-seq" style="max-height:134px;overflow-y:auto;color:var(--text-muted);font-style:italic;font-weight:400;">cleaned sequence appears here</div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-purple" id="clean-btn">Clean Sequence</button>
+    <button class="btn btn-ghost" id="clear-cleaner-btn">Clear</button>
+    <label class="checkbox-label"><input type="checkbox" id="wrap-output" checked> Wrap 60 bp/line</label>
+    <label class="checkbox-label"><input type="checkbox" id="send-to-target"> Send to Target Sequence ↓</label>
+  </div>
+  <div class="cleaner-stats" id="cleaner-stats-row">
+    <div class="cs-item"><span class="cs-val" id="cs-kept">—</span><span class="cs-key">bp kept</span></div>
+    <div class="cs-item"><span class="cs-val cs-removed" id="cs-removed">—</span><span class="cs-key">removed</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-pct">—</span><span class="cs-key">% ATGC</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-a">—</span><span class="cs-key">A</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-t">—</span><span class="cs-key">T</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-g">—</span><span class="cs-key">G</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-c">—</span><span class="cs-key">C</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-gc">—</span><span class="cs-key">%GC</span></div>
+  </div>
+</div>
+
+<!-- ══ 2. TARGET SEQUENCE ══ -->
+<div class="section">
+  <div class="section-head"><span class="tag tag-teal">2</span><h2>Target Sequence to Amplify</h2></div>
+  <div style="max-width:760px;">
+    <div class="field-label"><span class="dot dot-teal"></span> Target / Gene Sequence</div>
+    <textarea id="target-seq" rows="7" placeholder="Paste the target sequence to amplify from gDNA (plain nucleotides or FASTA)&#10;&#10;e.g. >GeneName&#10;ATGCGATCGATCG...&#10;&#10;FASTA header will be used for the download filename."></textarea>
+    <p class="note">Primers will be drawn from the first and last N bp of this sequence.</p>
+  </div>
+  <div class="btn-row">
+    <div class="num-group"><label>Primer length</label><input type="number" id="primer-len" value="21" min="15" max="35" step="1"><span class="unit">bp</span></div>
+    <button class="btn btn-teal" id="generate-btn">Design Primers</button>
+  </div>
+</div>
+
+<div class="msg msg-error" id="error-msg"></div>
+
+<!-- ══ RESULTS ══ -->
+<div id="results">
+
+  <!-- Sequence stats -->
+  <div class="stats-bar" id="seq-stats-bar">
+    <div class="sb-item"><span class="sb-val c-teal" id="sb-len">—</span><span class="sb-key">bp target</span></div>
+    <div class="sb-item"><span class="sb-val" id="sb-gc">—</span><span class="sb-key">%GC target</span></div>
+    <div class="sb-item"><span class="sb-val c-teal" id="sb-plen">—</span><span class="sb-key">bp primers</span></div>
+    <div class="sb-item"><span class="sb-val" id="sb-fgc">—</span><span class="sb-key">%GC fwd</span></div>
+    <div class="sb-item"><span class="sb-val" id="sb-rgc">—</span><span class="sb-key">%GC rev</span></div>
+  </div>
+
+  <!-- Raw primers -->
+  <div class="section-head" style="margin-bottom:1rem;"><span class="tag tag-blue">Primers</span><h2>Raw Primer Sequences</h2></div>
+  <div class="two-col" style="margin-bottom:1.5rem;">
+    <div class="out-card">
+      <div class="out-card-head"><span class="name name-teal">Forward Primer</span><div class="out-head-right"><span class="bp-badge" id="fwd-bp"></span><button class="copy-btn" onclick="copyPrimer('fwd-seq')">copy</button></div></div>
+      <div class="primer-seq" id="fwd-seq"></div>
+      <p class="primer-note" id="fwd-note">5′ → 3′ | first N bp of target</p>
+    </div>
+    <div class="out-card">
+      <div class="out-card-head"><span class="name" style="color:#1a7a4a;">Reverse Primer</span><div class="out-head-right"><span class="bp-badge" id="rev-bp"></span><button class="copy-btn" onclick="copyPrimer('rev-seq')">copy</button></div></div>
+      <div class="primer-seq" id="rev-seq"></div>
+      <p class="primer-note" id="rev-note">5′ → 3′ | RC of last N bp of target</p>
+    </div>
+  </div>
+
+  <!-- Step A: Restriction sites -->
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="field-label" style="margin-bottom:0.75rem;"><span class="dot dot-purple"></span> Step A — Add Restriction Site Overhangs <span style="font-weight:400;color:var(--text-muted);font-size:0.68rem;margin-left:0.5rem;">(optional)</span></div>
+    <div class="two-col" style="margin-bottom:1rem;">
+      <div>
+        <div style="font-size:0.72rem;font-weight:600;color:var(--text-mid);margin-bottom:0.5rem;">Forward Primer — 5′ restriction site</div>
+        <a href="https://www.labtools.us/nebcutter-v3-0/" target="_blank" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.68rem;color:var(--blue);text-decoration:none;font-family:'JetBrains Mono',monospace;margin-bottom:0.5rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>NEBcutter v3.0</a>
+        <div class="lib-panel">
+          <div class="lib-mode-row">
+            <button class="lib-mode-btn active" onclick="setLibMode('rs-fwd','saved',this)">Use Saved</button>
+            <button class="lib-mode-btn" onclick="setLibMode('rs-fwd','new',this)">Add &amp; Save New</button>
+            <button class="lib-mode-btn" onclick="setLibMode('rs-fwd','temp',this)">One-Time Use</button>
+          </div>
+          <div class="lib-content visible" id="rs-fwd-lib-saved">
+            <div class="lib-list-row"><select id="rs-fwd-lib-select" onchange="loadFromLib('rs-fwd')"><option value="">— select saved site —</option></select><button class="btn btn-ghost" style="padding:0.3rem 0.7rem;font-size:0.72rem;" onclick="deleteFromLib('rs-fwd')">Delete</button></div>
+            <div style="font-size:0.65rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="rs-fwd-lib-preview"></div>
+          </div>
+          <div class="lib-content" id="rs-fwd-lib-new">
+            <div class="lib-entry-row"><input type="text" id="rs-fwd-new-name" placeholder="Site name (e.g. EcoRI)"><input type="text" id="rs-fwd-new-seq" placeholder="Sequence (e.g. GAATTC)"></div>
+            <button class="btn btn-purple" style="font-size:0.72rem;padding:0.35rem 0.9rem;" onclick="saveToLib('rs-fwd')">Save to Library</button>
+            <span class="lib-save-note" id="rs-fwd-save-msg"></span>
+          </div>
+          <div class="lib-content" id="rs-fwd-lib-temp">
+            <div class="lib-entry-row"><input type="text" id="rs-fwd-temp-name" placeholder="Site name (for record)"><input type="text" id="rs-fwd-temp-seq" placeholder="Sequence (ATGC...)"></div>
+          </div>
+        </div>
+        <input type="hidden" id="rs-fwd-name"><input type="hidden" id="rs-fwd-input">
+      </div>
+      <div>
+        <div style="font-size:0.72rem;font-weight:600;color:var(--text-mid);margin-bottom:0.5rem;">Reverse Primer — 5′ restriction site</div>
+        <a href="https://www.labtools.us/nebcutter-v3-0/" target="_blank" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.68rem;color:var(--blue);text-decoration:none;font-family:'JetBrains Mono',monospace;margin-bottom:0.5rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>NEBcutter v3.0</a>
+        <div class="lib-panel">
+          <div class="lib-mode-row">
+            <button class="lib-mode-btn active" onclick="setLibMode('rs-rev','saved',this)">Use Saved</button>
+            <button class="lib-mode-btn" onclick="setLibMode('rs-rev','new',this)">Add &amp; Save New</button>
+            <button class="lib-mode-btn" onclick="setLibMode('rs-rev','temp',this)">One-Time Use</button>
+          </div>
+          <div class="lib-content visible" id="rs-rev-lib-saved">
+            <div class="lib-list-row"><select id="rs-rev-lib-select" onchange="loadFromLib('rs-rev')"><option value="">— select saved site —</option></select><button class="btn btn-ghost" style="padding:0.3rem 0.7rem;font-size:0.72rem;" onclick="deleteFromLib('rs-rev')">Delete</button></div>
+            <div style="font-size:0.65rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="rs-rev-lib-preview"></div>
+          </div>
+          <div class="lib-content" id="rs-rev-lib-new">
+            <div class="lib-entry-row"><input type="text" id="rs-rev-new-name" placeholder="Site name (e.g. XhoI)"><input type="text" id="rs-rev-new-seq" placeholder="Sequence (e.g. CTCGAG)"></div>
+            <button class="btn btn-purple" style="font-size:0.72rem;padding:0.35rem 0.9rem;" onclick="saveToLib('rs-rev')">Save to Library</button>
+            <span class="lib-save-note" id="rs-rev-save-msg"></span>
+          </div>
+          <div class="lib-content" id="rs-rev-lib-temp">
+            <div class="lib-entry-row"><input type="text" id="rs-rev-temp-name" placeholder="Site name (for record)"><input type="text" id="rs-rev-temp-seq" placeholder="Sequence (ATGC...)"></div>
+          </div>
+        </div>
+        <input type="hidden" id="rs-rev-name"><input type="hidden" id="rs-rev-input">
+      </div>
+    </div>
+    <div style="margin-bottom:0.75rem;">
+      <button class="btn btn-purple" onclick="applyRS()">Apply Restriction Sites</button>
+    </div>
+    <div class="two-col">
+      <div class="out-card">
+        <div class="out-card-head"><span class="name name-teal">Forward + RS</span><div class="out-head-right"><span class="bp-badge" id="fwd-rs-bp"></span><button class="copy-btn" onclick="copyPrimer('fwd-rs-seq')">copy</button></div></div>
+        <div class="primer-seq" id="fwd-rs-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">apply to generate</div>
+        <p class="primer-note" id="fwd-rs-note"></p>
+      </div>
+      <div class="out-card">
+        <div class="out-card-head"><span class="name" style="color:#1a7a4a;">Reverse + RS</span><div class="out-head-right"><span class="bp-badge" id="rev-rs-bp"></span><button class="copy-btn" onclick="copyPrimer('rev-rs-seq')">copy</button></div></div>
+        <div class="primer-seq" id="rev-rs-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">apply to generate</div>
+        <p class="primer-note" id="rev-rs-note"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step B: Tm + Padding -->
+  <div class="tm-card">
+    <div class="field-label" style="margin-bottom:0.85rem;"><span class="dot dot-blue"></span> Step B — Annealing Temperatures &amp; Padding</div>
+    <div class="tm-grid" style="margin-bottom:0.75rem;">
+      <div class="tm-box"><div class="tm-label">Forward Primer Tm</div><div class="tm-val" id="tm-fwd">—</div><div class="tm-primer-disp" id="tm-fwd-seq"></div></div>
+      <div class="tm-box"><div class="tm-label">Reverse Primer Tm</div><div class="tm-val" id="tm-rev">—</div><div class="tm-primer-disp" id="tm-rev-seq"></div></div>
+    </div>
+    <div id="tm-status" style="font-size:0.75rem;margin-bottom:0.75rem;font-family:'JetBrains Mono',monospace;"></div>
+    <button class="btn btn-orange" onclick="calcTmAndPad()" style="margin-bottom:1rem;">Calculate Tm &amp; Add Padding</button>
+    <p class="note" style="margin-bottom:1rem;">Uses nearest-neighbor Tm (SantaLucia 1998, 50 mM Na⁺, 250 nM primer). Both primers get 6 random nt: forward at 5′, reverse at 5′. GC bias tuned to bring both Tms toward each other.</p>
+    <div class="two-col">
+      <div class="out-card">
+        <div class="out-card-head"><span class="name name-teal">Padded Forward</span><div class="out-head-right"><span class="bp-badge" id="pad-fwd-bp"></span><button class="copy-btn" onclick="copyPrimer('pad-fwd-seq')">copy</button></div></div>
+        <div class="primer-seq" id="pad-fwd-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">calculate to generate</div>
+        <p class="primer-note" id="pad-fwd-note"></p>
+      </div>
+      <div class="out-card">
+        <div class="out-card-head"><span class="name" style="color:#1a7a4a;">Padded Reverse</span><div class="out-head-right"><span class="bp-badge" id="pad-rev-bp"></span><button class="copy-btn" onclick="copyPrimer('pad-rev-seq')">copy</button></div></div>
+        <div class="primer-seq" id="pad-rev-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">calculate to generate</div>
+        <p class="primer-note" id="pad-rev-note"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final summary -->
+  <div class="final-summary" id="final-summary-box" style="display:none;">
+    <div class="final-summary-head">✓ Final Primer Sequences</div>
+    <div class="two-col">
+      <div class="out-card">
+        <div class="out-card-head"><span class="name name-teal">Final Forward Primer</span><div class="out-head-right"><span class="bp-badge" id="sum-fwd-bp"></span><button class="copy-btn" onclick="copyPrimer('sum-fwd-seq')">copy</button></div></div>
+        <div class="primer-seq" id="sum-fwd-seq"></div>
+        <p class="primer-note" id="sum-fwd-note"></p>
+      </div>
+      <div class="out-card">
+        <div class="out-card-head"><span class="name" style="color:#1a7a4a;">Final Reverse Primer</span><div class="out-head-right"><span class="bp-badge" id="sum-rev-bp"></span><button class="copy-btn" onclick="copyPrimer('sum-rev-seq')">copy</button></div></div>
+        <div class="primer-seq" id="sum-rev-seq"></div>
+        <p class="primer-note" id="sum-rev-note"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Download -->
+  <div class="dl-section">
+    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;justify-content:flex-end;">
+      <label style="font-size:0.72rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">File name:</label>
+      <input type="text" id="download-filename" placeholder="gdna_primers" style="width:220px;font-family:'JetBrains Mono',monospace;">
+      <button class="btn btn-dl" onclick="downloadTxt()">⬇ Download .txt</button>
+      <button class="btn btn-dl" style="background:#1e7a4a;" onclick="downloadXlsx()">⬇ Download .xlsx</button>
+    </div>
+  </div>
+</div><!-- end results -->
+
+<script>
+// ══════════════════════════════════════════
+// Utilities
+// ══════════════════════════════════════════
+function cleanSeq(raw){return raw.replace(/^>.*$/gm,'').replace(/\s+/g,'').toUpperCase();}
+function reverseComplement(seq){
+  const comp={A:'T',T:'A',G:'C',C:'G',N:'N',U:'A'};
+  return seq.split('').reverse().map(b=>comp[b]||'N').join('');
+}
+function wrapSeq(seq,width=60){
+  const lines=[];for(let i=0;i<seq.length;i+=width)lines.push(seq.slice(i,i+width));return lines.join('\n');
+}
+function extractGeneName(raw){const m=raw.match(/^>\s*(\S+)/m);return m?m[1]:'';}
+function gcPct(seq){return seq.length?((seq.match(/[GC]/g)||[]).length/seq.length*100).toFixed(1):0;}
+
+// ══════════════════════════════════════════
+// Nearest-Neighbor Tm (SantaLucia 1998)
+// ══════════════════════════════════════════
+const NN_DH={AA:-7.9,AT:-7.2,AC:-8.4,AG:-7.8,TA:-7.2,TT:-7.9,TC:-8.2,TG:-8.5,CA:-8.5,CT:-7.8,CC:-8.0,CG:-10.6,GA:-8.2,GT:-8.4,GC:-9.8,GG:-8.0};
+const NN_DS={AA:-22.2,AT:-20.4,AC:-22.4,AG:-21.0,TA:-21.3,TT:-22.2,TC:-22.2,TG:-22.7,CA:-22.7,CT:-21.0,CC:-19.9,CG:-27.2,GA:-22.2,GT:-22.4,GC:-24.4,GG:-19.9};
+const R_=1.987;
+function calcTm(seq){
+  seq=seq.toUpperCase().replace(/[^ATGC]/g,'');
+  if(seq.length<2)return 0;
+  let dH=0.2,dS=-5.7;
+  if(seq[0]==='A'||seq[0]==='T'){dH+=2.3;dS+=4.1;}
+  if(seq[seq.length-1]==='A'||seq[seq.length-1]==='T'){dH+=2.3;dS+=4.1;}
+  for(let i=0;i<seq.length-1;i++){const di=seq[i]+seq[i+1];dH+=NN_DH[di]||0;dS+=NN_DS[di]||0;}
+  return (dH*1000)/(dS+R_*Math.log(250e-9/4))-273.15+16.6*Math.log10(0.05);
+}
+
+function paddingWithBias(n,gcFraction){
+  const pool=[];
+  const gc=Math.round(n*gcFraction);
+  for(let i=0;i<gc;i++)pool.push(['G','C'][Math.floor(Math.random()*2)]);
+  for(let i=0;i<n-gc;i++)pool.push(['A','T'][Math.floor(Math.random()*2)]);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return pool.join('');
+}
+
+// ══════════════════════════════════════════
+// Library System (localStorage — shared 'lib_rs')
+// ══════════════════════════════════════════
+function loadLib(){try{return JSON.parse(localStorage.getItem('lib_rs')||'[]');}catch(e){return[];}}
+function saveLibArr(arr){localStorage.setItem('lib_rs',JSON.stringify(arr));}
+
+function refreshLibSelect(type){
+  const sel=document.getElementById(type+'-lib-select');if(!sel)return;
+  const arr=loadLib();const cur=sel.value;
+  sel.innerHTML='<option value="">— select saved site —</option>';
+  arr.forEach((item,i)=>{const opt=document.createElement('option');opt.value=i;opt.textContent=item.name+'  ('+item.seq+')';sel.appendChild(opt);});
+  if(cur)sel.value=cur;
+}
+function loadFromLib(type){
+  const sel=document.getElementById(type+'-lib-select');if(!sel)return;
+  const arr=loadLib();const idx=parseInt(sel.value);if(isNaN(idx))return;
+  const item=arr[idx];if(!item)return;
+  document.getElementById(type+'-name').value=item.name;
+  document.getElementById(type+'-input').value=item.seq;
+  document.getElementById(type+'-lib-preview').textContent=item.name+': '+item.seq;
+}
+function saveToLib(type){
+  const name=document.getElementById(type+'-new-name').value.trim();
+  const seq=document.getElementById(type+'-new-seq').value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase();
+  const msgId=type+'-save-msg';
+  if(!name||!seq){document.getElementById(msgId).textContent='Name and sequence required.';return;}
+  const arr=loadLib();
+  if(arr.find(x=>x.name.toLowerCase()===name.toLowerCase())){document.getElementById(msgId).textContent='Name already exists.';return;}
+  arr.push({name,seq});saveLibArr(arr);
+  document.getElementById(type+'-name').value=name;
+  document.getElementById(type+'-input').value=seq;
+  document.getElementById(msgId).textContent='✓ Saved!';
+  setTimeout(()=>document.getElementById(msgId).textContent='',2000);
+  ['rs-fwd','rs-rev'].forEach(t=>refreshLibSelect(t));
+}
+function deleteFromLib(type){
+  const sel=document.getElementById(type+'-lib-select');if(!sel)return;
+  const idx=parseInt(sel.value);if(isNaN(idx)){alert('Select an item to delete.');return;}
+  const arr=loadLib();arr.splice(idx,1);saveLibArr(arr);
+  ['rs-fwd','rs-rev'].forEach(t=>refreshLibSelect(t));
+}
+function setLibMode(type,mode,btn){
+  btn.closest('.lib-panel').querySelectorAll('.lib-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['saved','new','temp'].forEach(m=>{const el=document.getElementById(type+'-lib-'+m);if(el)el.classList.remove('visible');});
+  const target=document.getElementById(type+'-lib-'+mode);if(target)target.classList.add('visible');
+  if(mode==='temp'){
+    [type+'-temp-name',type+'-temp-seq'].forEach(id=>{
+      document.getElementById(id)?.addEventListener('input',()=>{
+        document.getElementById(type+'-name').value=document.getElementById(type+'-temp-name')?.value.trim()||'';
+        document.getElementById(type+'-input').value=document.getElementById(type+'-temp-seq')?.value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase()||'';
+      });
+    });
+  }
+}
+function getRS(type){
+  return{name:document.getElementById(type+'-name').value.trim(),seq:document.getElementById(type+'-input').value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase()};
+}
+
+// ══════════════════════════════════════════
+// State
+// ══════════════════════════════════════════
+let currentTarget='', currentGeneName='';
+let baseFwd='', baseRev='';        // raw primers (no RS)
+let workingFwd='', workingRev='';  // with RS if applied
+let fwdRSName='', revRSName='';
+
+function updateFilename(){
+  const parts=[currentGeneName,'gdna_primers'].filter(Boolean);
+  const el=document.getElementById('download-filename');
+  if(el)el.value=parts.join('_');
+}
+
+// ══════════════════════════════════════════
+// Error helpers
+// ══════════════════════════════════════════
+function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.className='msg msg-error';el.style.display='block';}
+function clearError(){const el=document.getElementById('error-msg');el.style.display='none';}
+
+// ══════════════════════════════════════════
+// Design Primers
+// ══════════════════════════════════════════
+document.getElementById('generate-btn').addEventListener('click',()=>{
+  clearError();
+  const rawTarget=document.getElementById('target-seq').value.trim();
+  const pLen=parseInt(document.getElementById('primer-len').value)||21;
+  if(!rawTarget){showError('Please paste a target sequence.');return;}
+  const seq=cleanSeq(rawTarget);
+  if(seq.length<pLen*2){showError('Sequence too short — needs at least 2× primer length ('+pLen*2+' bp).');return;}
+
+  currentTarget=seq;
+  currentGeneName=extractGeneName(rawTarget);
+  updateFilename();
+
+  baseFwd=seq.slice(0,pLen);
+  baseRev=reverseComplement(seq.slice(-pLen));
+  workingFwd=baseFwd; workingRev=baseRev;
+  fwdRSName=''; revRSName='';
+
+  // Stats
+  document.getElementById('sb-len').textContent=seq.length.toLocaleString();
+  document.getElementById('sb-gc').textContent=gcPct(seq)+'%';
+  document.getElementById('sb-plen').textContent=pLen;
+  const fgc=parseFloat(gcPct(baseFwd));
+  const rgc=parseFloat(gcPct(baseRev));
+  const fgcEl=document.getElementById('sb-fgc');
+  const rgcEl=document.getElementById('sb-rgc');
+  fgcEl.textContent=fgc+'%';
+  rgcEl.textContent=rgc+'%';
+  fgcEl.className='sb-val'+(fgc<40||fgc>60?' c-warn':' c-teal');
+  rgcEl.className='sb-val'+(rgc<40||rgc>60?' c-warn':' c-teal');
+
+  // Display raw primers
+  document.getElementById('fwd-seq').innerHTML='<span class="seq-part-body">'+baseFwd+'</span>';
+  document.getElementById('fwd-bp').textContent=pLen+' bp';
+  document.getElementById('fwd-note').textContent='5′ → 3′ | first '+pLen+' bp | GC: '+fgc+'%';
+
+  document.getElementById('rev-seq').innerHTML='<span class="seq-part-body">'+baseRev+'</span>';
+  document.getElementById('rev-bp').textContent=pLen+' bp';
+  document.getElementById('rev-note').textContent='5′ → 3′ | RC of last '+pLen+' bp | GC: '+rgc+'%';
+
+  // Reset downstream
+  const pending='<span style="color:var(--text-muted);font-style:italic;font-weight:400;">apply to generate</span>';
+  const calc='<span style="color:var(--text-muted);font-style:italic;font-weight:400;">calculate to generate</span>';
+  ['fwd-rs-seq','rev-rs-seq'].forEach(id=>document.getElementById(id).innerHTML=pending);
+  ['fwd-rs-bp','rev-rs-bp','pad-fwd-bp','pad-rev-bp','sum-fwd-bp','sum-rev-bp'].forEach(id=>document.getElementById(id).textContent='');
+  ['pad-fwd-seq','pad-rev-seq','sum-fwd-seq','sum-rev-seq'].forEach(id=>document.getElementById(id).innerHTML=calc);
+  ['fwd-rs-note','rev-rs-note','pad-fwd-note','pad-rev-note','sum-fwd-note','sum-rev-note'].forEach(id=>document.getElementById(id).textContent='');
+  document.getElementById('tm-fwd').textContent='—';document.getElementById('tm-rev').textContent='—';
+  document.getElementById('tm-fwd-seq').textContent='';document.getElementById('tm-rev-seq').textContent='';
+  document.getElementById('tm-status').textContent='';
+  document.getElementById('final-summary-box').style.display='none';
+
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+// ══════════════════════════════════════════
+// Apply Restriction Sites
+// ══════════════════════════════════════════
+function applyRS(){
+  if(!baseFwd){alert('Design primers first.');return;}
+  const fRS=getRS('rs-fwd');const rRS=getRS('rs-rev');
+  fwdRSName=fRS.name; revRSName=rRS.name;
+  workingFwd=fRS.seq+baseFwd;
+  workingRev=rRS.seq+baseRev;
+
+  document.getElementById('fwd-rs-seq').innerHTML=
+    (fRS.seq?'<span class="seq-part-rs">'+fRS.seq+'</span>':'')+
+    '<span class="seq-part-body">'+baseFwd+'</span>';
+  document.getElementById('fwd-rs-bp').textContent=workingFwd.length+' bp';
+  document.getElementById('fwd-rs-note').textContent=fwdRSName?'RS: '+fwdRSName:'No restriction site';
+
+  document.getElementById('rev-rs-seq').innerHTML=
+    (rRS.seq?'<span class="seq-part-rs">'+rRS.seq+'</span>':'')+
+    '<span class="seq-part-body">'+baseRev+'</span>';
+  document.getElementById('rev-rs-bp').textContent=workingRev.length+' bp';
+  document.getElementById('rev-rs-note').textContent=revRSName?'RS: '+revRSName:'No restriction site';
+
+  // Reset padding
+  const calc='<span style="color:var(--text-muted);font-style:italic;font-weight:400;">calculate to generate</span>';
+  ['pad-fwd-seq','pad-rev-seq'].forEach(id=>document.getElementById(id).innerHTML=calc);
+  ['pad-fwd-bp','pad-rev-bp'].forEach(id=>document.getElementById(id).textContent='');
+  document.getElementById('tm-status').textContent='';
+  document.getElementById('final-summary-box').style.display='none';
+}
+
+// ══════════════════════════════════════════
+// Tm + Padding
+// ══════════════════════════════════════════
+function calcTmAndPad(){
+  if(!workingFwd||!workingRev){alert('Design primers first.');return;}
+
+  const tmFwd=calcTm(workingFwd);
+  const tmRev=calcTm(workingRev);
+  document.getElementById('tm-fwd').textContent=tmFwd.toFixed(1)+' °C';
+  document.getElementById('tm-rev').textContent=tmRev.toFixed(1)+' °C';
+  document.getElementById('tm-fwd-seq').textContent=workingFwd;
+  document.getElementById('tm-rev-seq').textContent=workingRev;
+
+  // Both get 6 nt at their 5′ ends, biased toward midpoint Tm
+  const mid=(tmFwd+tmRev)/2;
+  const fwdNeedsRaise=tmFwd<mid; const revNeedsRaise=tmRev<mid;
+  const fwdBias=fwdNeedsRaise?0.8:0.2;
+  const revBias=revNeedsRaise?0.8:0.2;
+
+  let bestPadF=paddingWithBias(6,fwdBias);
+  let bestPadR=paddingWithBias(6,revBias);
+  let bestDiff=Math.abs(calcTm(bestPadF+workingFwd)-calcTm(bestPadR+workingRev));
+
+  for(let i=0;i<400;i++){
+    const pf=paddingWithBias(6,fwdBias);
+    const pr=paddingWithBias(6,revBias);
+    const d=Math.abs(calcTm(pf+workingFwd)-calcTm(pr+workingRev));
+    if(d<bestDiff){bestDiff=d;bestPadF=pf;bestPadR=pr;if(d<=0.5)break;}
+  }
+
+  const paddedFwd=bestPadF+workingFwd;
+  const paddedRev=bestPadR+workingRev;
+  const finalTmFwd=calcTm(paddedFwd);
+  const finalTmRev=calcTm(paddedRev);
+  const finalDiff=Math.abs(finalTmFwd-finalTmRev);
+
+  const statusEl=document.getElementById('tm-status');
+  statusEl.innerHTML=finalDiff<=1.0
+    ?'<span class="tm-diff-ok">✓ Tms within 1 °C after padding ('+finalTmFwd.toFixed(1)+' / '+finalTmRev.toFixed(1)+' °C).</span>'
+    :'<span class="tm-diff-warn">⚠ Tm difference: '+finalDiff.toFixed(1)+' °C after padding ('+finalTmFwd.toFixed(1)+' / '+finalTmRev.toFixed(1)+' °C).</span>';
+
+  document.getElementById('pad-fwd-seq').innerHTML=
+    '<span class="seq-part-pad">'+bestPadF+'</span><span class="seq-part-body">'+workingFwd+'</span>';
+  document.getElementById('pad-fwd-bp').textContent=paddedFwd.length+' bp';
+  document.getElementById('pad-fwd-note').textContent='Tm: '+finalTmFwd.toFixed(1)+' °C  (+6 bp at 5′: '+bestPadF+')';
+
+  document.getElementById('pad-rev-seq').innerHTML=
+    '<span class="seq-part-pad">'+bestPadR+'</span><span class="seq-part-body">'+workingRev+'</span>';
+  document.getElementById('pad-rev-bp').textContent=paddedRev.length+' bp';
+  document.getElementById('pad-rev-note').textContent='Tm: '+finalTmRev.toFixed(1)+' °C  (+6 bp at 5′: '+bestPadR+')';
+
+  // Final summary
+  document.getElementById('sum-fwd-seq').innerHTML=document.getElementById('pad-fwd-seq').innerHTML;
+  document.getElementById('sum-rev-seq').innerHTML=document.getElementById('pad-rev-seq').innerHTML;
+  document.getElementById('sum-fwd-bp').textContent=paddedFwd.length+' bp';
+  document.getElementById('sum-rev-bp').textContent=paddedRev.length+' bp';
+  document.getElementById('sum-fwd-note').textContent='Tm: '+finalTmFwd.toFixed(1)+' °C'+(fwdRSName?' | RS: '+fwdRSName:'');
+  document.getElementById('sum-rev-note').textContent='Tm: '+finalTmRev.toFixed(1)+' °C'+(revRSName?' | RS: '+revRSName:'');
+  document.getElementById('final-summary-box').style.display='block';
+  document.getElementById('final-summary-box').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ══════════════════════════════════════════
+// Copy
+// ══════════════════════════════════════════
+function copyPrimer(id){
+  const el=document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent).then(()=>{
+    const card=el.closest('.out-card');const btn=card?card.querySelector('.copy-btn'):null;if(!btn)return;
+    const orig=btn.textContent;btn.textContent='copied!';btn.style.color='var(--accent)';
+    setTimeout(()=>{btn.textContent=orig;btn.style.color='';},1500);
+  });
+}
+
+// ══════════════════════════════════════════
+// Download
+// ══════════════════════════════════════════
+function getText(id){return(document.getElementById(id)?.textContent||'').trim();}
+function fname(){return(document.getElementById('download-filename').value.trim()||'gdna_primers').replace(/[^a-zA-Z0-9_\-]/g,'_');}
+
+function downloadTxt(){
+  const lines=[];const hr='═'.repeat(60);const hr2='─'.repeat(60);
+  lines.push('gDNA AMPLIFICATION PRIMER DESIGN');
+  lines.push('Generated: '+new Date().toLocaleString());
+  if(currentGeneName)lines.push('Gene: '+currentGeneName);
+  lines.push(hr);
+  if(currentTarget){
+    lines.push('');lines.push('TARGET SEQUENCE');lines.push(hr2);
+    lines.push('Length: '+currentTarget.length.toLocaleString()+' bp');
+    lines.push('GC%:    '+gcPct(currentTarget)+'%');
+    lines.push('');lines.push(currentTarget);
+  }
+  if(baseFwd){
+    lines.push('');lines.push('RAW PRIMERS');lines.push(hr2);
+    lines.push('Forward: '+baseFwd+'  ('+getText('fwd-bp')+')  GC: '+getText('fwd-note').match(/GC: (.+)/)?.[1]||'');
+    lines.push('Reverse: '+baseRev+'  ('+getText('rev-bp')+')');
+  }
+  const frs=getText('fwd-rs-seq');
+  if(frs&&!frs.includes('apply')){
+    lines.push('');lines.push('WITH RESTRICTION SITES');lines.push(hr2);
+    if(fwdRSName)lines.push('Fwd RS: '+fwdRSName);
+    lines.push('Forward: '+frs+'  ('+getText('fwd-rs-bp')+')');
+    if(revRSName)lines.push('Rev RS: '+revRSName);
+    lines.push('Reverse: '+getText('rev-rs-seq')+'  ('+getText('rev-rs-bp')+')');
+  }
+  const tmF=getText('tm-fwd');
+  if(tmF!=='—'){
+    lines.push('');lines.push('Tm & PADDED PRIMERS');lines.push(hr2);
+    lines.push('Forward Tm: '+tmF);
+    lines.push('Reverse Tm: '+getText('tm-rev'));
+    lines.push(getText('tm-status').replace(/[✓⚠]/g,'').trim());
+    const pf=getText('pad-fwd-seq');
+    if(pf&&!pf.includes('calculate')){
+      lines.push('Padded Fwd: '+pf+'  ('+getText('pad-fwd-bp')+')');
+      lines.push('            '+getText('pad-fwd-note'));
+      lines.push('Padded Rev: '+getText('pad-rev-seq')+'  ('+getText('pad-rev-bp')+')');
+      lines.push('            '+getText('pad-rev-note'));
+    }
+  }
+  if(document.getElementById('final-summary-box').style.display!=='none'){
+    lines.push('');lines.push('FINAL PRIMER SEQUENCES');lines.push(hr2);
+    lines.push('Forward: '+getText('sum-fwd-seq')+'  ('+getText('sum-fwd-bp')+')');
+    lines.push('         '+getText('sum-fwd-note'));
+    lines.push('Reverse: '+getText('sum-rev-seq')+'  ('+getText('sum-rev-bp')+')');
+    lines.push('         '+getText('sum-rev-note'));
+  }
+  lines.push('');lines.push(hr);lines.push('End of report');
+  const blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname()+'.txt';a.click();
+}
+
+function downloadXlsx(){
+  if(!window.XLSX){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=_buildXlsx;document.head.appendChild(s);
+  }else{_buildXlsx();}
+}
+function _buildXlsx(){
+  const wb=XLSX.utils.book_new();
+  const SH={font:{name:'Calibri',sz:11,bold:true}};
+  const SS={font:{name:'Calibri',sz:10,bold:true,color:{rgb:'0E7C6B'}}};
+  const SN={font:{name:'Courier New',sz:10}};
+  const SP={font:{name:'Courier New',sz:10,italic:true}};  // RS = italic
+  const SPAD={font:{name:'Courier New',sz:10,bold:true,color:{rgb:'B45309'}}};  // pad = bold amber
+
+  function cell(v,s){return{v:v||'',t:'s',s:s||undefined};}
+  function buildSheet(rows){
+    const ws={};let maxC=0;
+    rows.forEach((row,R)=>{row.forEach((c,C)=>{
+      const addr=XLSX.utils.encode_cell({r:R,c:C});
+      ws[addr]=typeof c==='string'?{v:c,t:'s'}:(c||{v:'',t:'s'});
+      if(C>maxC)maxC=C;
+    });});
+    ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length-1,c:maxC}});
+    return ws;
+  }
+
+  const R1=[];
+  R1.push([cell('gDNA Amplification Primer Design',SH)]);
+  R1.push([cell('Generated: '+new Date().toLocaleString())]);
+  if(currentGeneName)R1.push([cell('Gene: '+currentGeneName)]);
+  R1.push([]);
+  if(currentTarget){
+    R1.push([cell('TARGET SEQUENCE',SS)]);
+    R1.push([cell('Length'),cell(currentTarget.length.toLocaleString()+' bp')]);
+    R1.push([cell('GC%'),cell(gcPct(currentTarget)+'%')]);
+    R1.push([cell('Sequence'),{v:currentTarget,t:'s',s:SN}]);
+    R1.push([]);
+  }
+  if(baseFwd){
+    R1.push([cell('RAW PRIMERS',SS)]);
+    R1.push([cell('Forward'),{v:baseFwd,t:'s',s:SN},cell(getText('fwd-bp')),cell('GC: '+gcPct(baseFwd)+'%')]);
+    R1.push([cell('Reverse'),{v:baseRev,t:'s',s:SN},cell(getText('rev-bp')),cell('GC: '+gcPct(baseRev)+'%')]);
+    R1.push([]);
+  }
+  const frs=getText('fwd-rs-seq');
+  if(frs&&!frs.includes('apply')){
+    R1.push([cell('WITH RESTRICTION SITES',SS)]);
+    R1.push([cell('Fwd RS name'),cell(fwdRSName)]);
+    R1.push([cell('Forward'),{v:frs,t:'s',s:SN},cell(getText('fwd-rs-bp'))]);
+    R1.push([cell('Rev RS name'),cell(revRSName)]);
+    R1.push([cell('Reverse'),{v:getText('rev-rs-seq'),t:'s',s:SN},cell(getText('rev-rs-bp'))]);
+    R1.push([]);
+  }
+  const tmF=getText('tm-fwd');
+  if(tmF!=='—'){
+    R1.push([cell('Tm & PADDED PRIMERS',SS)]);
+    R1.push([cell('Forward Tm'),cell(tmF)]);
+    R1.push([cell('Reverse Tm'),cell(getText('tm-rev'))]);
+    R1.push([cell(getText('tm-status').replace(/[✓⚠]/g,'').trim())]);
+    const pf=getText('pad-fwd-seq');
+    if(pf&&!pf.includes('calculate')){
+      R1.push([cell('Padded Fwd'),{v:pf,t:'s',s:SN},cell(getText('pad-fwd-bp')),cell(getText('pad-fwd-note'))]);
+      R1.push([cell('Padded Rev'),{v:getText('pad-rev-seq'),t:'s',s:SN},cell(getText('pad-rev-bp')),cell(getText('pad-rev-note'))]);
+    }
+    R1.push([]);
+  }
+  if(document.getElementById('final-summary-box').style.display!=='none'){
+    R1.push([cell('FINAL PRIMER SEQUENCES',SS)]);
+    R1.push([cell('Primer'),cell('Sequence'),cell('bp'),cell('Notes')]);
+    R1.push([cell('Forward'),{v:getText('sum-fwd-seq'),t:'s',s:SN},cell(getText('sum-fwd-bp')),cell(getText('sum-fwd-note'))]);
+    R1.push([cell('Reverse'),{v:getText('sum-rev-seq'),t:'s',s:SN},cell(getText('sum-rev-bp')),cell(getText('sum-rev-note'))]);
+  }
+  const ws1=buildSheet(R1);ws1['!cols']=[{wch:18},{wch:70},{wch:12},{wch:45}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Summary');
+  XLSX.writeFile(wb,fname()+'.xlsx');
+}
+
+// ══════════════════════════════════════════
+// DNA Cleaner
+// ══════════════════════════════════════════
+let lastCleanedSeq='';
+document.getElementById('clean-btn').addEventListener('click',()=>{
+  const raw=document.getElementById('cleaner-input').value;if(!raw.trim())return;
+  const noHeaders=raw.replace(/^>.*$/gm,'');
+  const atgcOnly=noHeaders.toUpperCase().replace(/[^ATGC]/g,'');
+  lastCleanedSeq=atgcOnly;
+  const wrap=document.getElementById('wrap-output').checked;
+  document.getElementById('cleaner-output-seq').textContent=atgcOnly.length?(wrap?wrapSeq(atgcOnly):atgcOnly):'(no ATGC characters found)';
+  document.getElementById('cleaner-output-seq').style.color='';document.getElementById('cleaner-output-seq').style.fontStyle='';document.getElementById('cleaner-output-seq').style.fontWeight='';
+  document.getElementById('cleaner-bp-label').textContent=atgcOnly.length?atgcOnly.length.toLocaleString()+' bp':'';
+  const rawLen=noHeaders.replace(/\s/g,'').length;
+  const removed=rawLen-atgcOnly.length;
+  const pct=rawLen>0?((atgcOnly.length/rawLen)*100).toFixed(1):'0.0';
+  const counts={A:0,T:0,G:0,C:0};for(const ch of atgcOnly)counts[ch]++;
+  const gc=atgcOnly.length?(((counts.G+counts.C)/atgcOnly.length)*100).toFixed(1):'—';
+  document.getElementById('cs-kept').textContent=atgcOnly.length.toLocaleString();
+  document.getElementById('cs-removed').textContent=removed.toLocaleString();
+  document.getElementById('cs-pct').textContent=pct+'%';
+  document.getElementById('cs-a').textContent=counts.A.toLocaleString();
+  document.getElementById('cs-t').textContent=counts.T.toLocaleString();
+  document.getElementById('cs-g').textContent=counts.G.toLocaleString();
+  document.getElementById('cs-c').textContent=counts.C.toLocaleString();
+  document.getElementById('cs-gc').textContent=gc+'%';
+  document.getElementById('cleaner-stats-row').style.display='flex';
+  if(document.getElementById('send-to-target').checked)
+    document.getElementById('target-seq').value=wrap?wrapSeq(atgcOnly):atgcOnly;
+});
+document.getElementById('clear-cleaner-btn').addEventListener('click',()=>{
+  document.getElementById('cleaner-input').value='';
+  document.getElementById('cleaner-output-seq').textContent='cleaned sequence appears here';
+  document.getElementById('cleaner-output-seq').style.color='var(--text-muted)';document.getElementById('cleaner-output-seq').style.fontStyle='italic';
+  document.getElementById('cleaner-bp-label').textContent='';
+  document.getElementById('cleaner-stats-row').style.display='none';
+  lastCleanedSeq='';
+});
+function cleanerCopy(){
+  if(!lastCleanedSeq)return;
+  navigator.clipboard.writeText(lastCleanedSeq).then(()=>{
+    const btn=document.getElementById('cleaner-copy-btn');
+    btn.textContent='copied!';btn.style.color='var(--purple)';
+    setTimeout(()=>{btn.textContent='copy';btn.style.color='';},1500);
+  });
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  ['rs-fwd','rs-rev'].forEach(t=>refreshLibSelect(t));
+});
+</script>
+</body>
+</html>
