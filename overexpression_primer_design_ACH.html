@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overexpression Primer Design</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Inter:wght@400;500;600;700&display=swap');
+  :root {
+    --bg:#f4f6f8; --surface:#ffffff; --border:#dde2e8; --border-light:#eaecef;
+    --accent:#0e7c6b; --accent-light:#e6f4f1; --accent2:#c95b1e; --accent2-light:#fdf0ea;
+    --purple:#6d4fc2; --purple-light:#f0ecfb; --text:#1a2332; --text-mid:#4a5568;
+    --text-muted:#8a98a8; --red:#dc2626;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding:2rem 2.5rem;font-size:14px;}
+  header{margin-bottom:2rem;padding-bottom:1rem;border-bottom:2px solid var(--border);display:flex;align-items:center;flex-wrap:wrap;gap:0.75rem;}
+  .header-left{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+  header h1{font-size:1.2rem;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:0.6rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;}
+  .tag-teal{background:var(--accent-light);color:var(--accent);}
+  .tag-purple{background:var(--purple-light);color:var(--purple);}
+  .tag-orange{background:var(--accent2-light);color:var(--accent2);}
+  .section{margin-bottom:2rem;}
+  .section-head{display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;}
+  .section-head h2{font-size:0.8rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);}
+  .section-head::after{content:'';flex:1;height:1px;background:var(--border);}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.2rem;}
+  .field-label{font-size:0.7rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.45rem;display:flex;align-items:center;gap:0.4rem;}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+  .dot-teal{background:var(--accent);} .dot-orange{background:var(--accent2);} .dot-purple{background:var(--purple);}
+  textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.72rem;line-height:1.65;padding:0.75rem;resize:vertical;outline:none;transition:border-color 0.15s,box-shadow 0.15s;}
+  textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,124,107,0.1);}
+  textarea::placeholder{color:var(--text-muted);}
+  input[type=text]{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.75rem;padding:0.45rem 0.7rem;outline:none;width:100%;transition:border-color 0.15s;}
+  input[type=text]:focus{border-color:var(--accent);}
+  input[type=text]::placeholder{color:var(--text-muted);}
+  select{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.75rem;padding:0.45rem 0.7rem;outline:none;width:100%;cursor:pointer;}
+  select:focus{border-color:var(--accent);}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+  @media(max-width:760px){.two-col,.three-col{grid-template-columns:1fr;}}
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;padding:0.55rem 1.4rem;transition:filter 0.15s,transform 0.1s;}
+  .btn:hover{filter:brightness(1.07);transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn-teal{background:var(--accent);color:#fff;} .btn-purple{background:var(--purple);color:#fff;}
+  .btn-orange{background:var(--accent2);color:#fff;} .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-mid);}
+  .btn-ghost:hover{background:var(--bg);} .btn-dl{background:#1a2332;color:#fff;}
+  .btn-row{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-top:0.9rem;}
+  .num-group{display:inline-flex;align-items:center;gap:0.4rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.45rem 0.85rem;}
+  .num-group label{font-size:0.68rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;}
+  .num-group input[type=number]{background:transparent;border:none;outline:none;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.95rem;font-weight:600;width:65px;text-align:right;}
+  .num-group .unit{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-muted);}
+  .note{font-size:0.68rem;color:var(--text-muted);margin-top:0.4rem;font-family:'JetBrains Mono',monospace;}
+  .msg{font-family:'JetBrains Mono',monospace;font-size:0.72rem;border-radius:6px;padding:0.55rem 0.9rem;margin-bottom:1rem;display:none;}
+  .msg-error{color:var(--red);background:#fef2f2;border:1px solid #fecaca;}
+  .msg-warning{color:#b45309;background:#fffbeb;border:1px solid #fde68a;}
+  #results{display:none;}
+  .map-bar{position:relative;height:32px;border-radius:4px;background:var(--bg);border:1px solid var(--border);overflow:hidden;margin-bottom:0.75rem;}
+  .map-track{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.07em;}
+  .map-track.upstream{background:rgba(14,124,107,0.15);border-right:2px solid var(--accent);color:var(--accent);}
+  .map-track.gene{background:rgba(201,91,30,0.18);border-left:2px solid var(--accent2);border-right:2px solid var(--accent2);color:var(--accent2);z-index:2;}
+  .map-track.downstream{background:rgba(14,124,107,0.15);border-left:2px solid var(--accent);color:var(--accent);}
+  .stats-row{display:flex;flex-wrap:wrap;gap:1.25rem;margin-bottom:1rem;}
+  .stat{display:flex;flex-direction:column;gap:1px;}
+  .stat-val{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:var(--text);}
+  .stat-val.c-teal{color:var(--accent);} .stat-val.c-orange{color:var(--accent2);}
+  .stat-key{font-size:0.62rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);}
+  .out-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .out-card-head{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.9rem;border-bottom:1px solid var(--border-light);}
+  .out-card-head .name{font-size:0.67rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
+  .name-teal{color:var(--accent);} .name-orange{color:var(--accent2);} .name-purple{color:var(--purple);}
+  .name-blue{color:#1d6fa4;} .name-green{color:#1a7a4a;}
+  .out-head-right{display:flex;align-items:center;gap:0.5rem;}
+  .bp-badge{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-muted);}
+  .copy-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.6rem;padding:2px 7px;border-radius:3px;cursor:pointer;transition:all 0.15s;}
+  .copy-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+  .out-seq{font-family:'JetBrains Mono',monospace;font-size:0.68rem;line-height:1.7;color:var(--text-mid);padding:0.75rem 0.9rem;max-height:150px;overflow-y:auto;word-break:break-all;white-space:pre-wrap;background:var(--bg);}
+  .combined-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:1rem;}
+  .combined-head{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.9rem;border-bottom:1px solid var(--border-light);}
+  .combined-head .name{font-size:0.67rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);}
+  .combined-seq{font-family:'JetBrains Mono',monospace;font-size:0.68rem;line-height:1.7;color:var(--text-mid);padding:0.75rem 0.9rem;max-height:160px;overflow-y:auto;word-break:break-all;white-space:pre-wrap;background:var(--bg);}
+  /* Primer */
+  #primer-section{display:none;}
+  .primer-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+  @media(max-width:760px){.primer-grid{grid-template-columns:1fr;}}
+  .primer-seq{font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;letter-spacing:0.04em;line-height:1.5;padding:0.75rem 0.9rem;background:var(--bg);word-break:break-all;white-space:pre-wrap;color:var(--text);min-height:52px;}
+  .stop-codon-highlight{background:#fee2e2;color:#b91c1c;border-radius:2px;padding:0 1px;font-weight:700;}
+  .seq-part-tag{color:var(--purple);font-weight:700;}
+  .seq-part-body{color:var(--text);}
+  .seq-part-rs{color:#6d4fc2;font-weight:700;background:var(--purple-light);border-radius:2px;padding:0 1px;}
+  .seq-part-pad{color:#b45309;font-weight:700;background:#fffbeb;border-radius:2px;padding:0 1px;}
+  .seq-part-stop{color:#b91c1c;font-weight:700;background:#fee2e2;border-radius:2px;padding:0 1px;}
+  .tag-row{display:flex;align-items:stretch;gap:0;margin-top:0.35rem;}
+  .tag-row textarea{border-radius:6px 0 0 6px;border-right:none;height:44px;min-height:44px;resize:none;font-size:0.72rem;padding:0.55rem 0.75rem;flex:1;}
+  .tag-row .btn{border-radius:0 6px 6px 0;padding:0 1.1rem;white-space:nowrap;font-size:0.78rem;}
+  .rev-modified-seq{font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;letter-spacing:0.04em;line-height:1.5;padding:0.75rem 0.9rem;background:var(--bg);word-break:break-all;white-space:pre-wrap;color:var(--text);min-height:52px;}
+  .primer-note{font-size:0.65rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-top:0.35rem;}
+  /* Library */
+  .lib-panel{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:0.85rem;margin-bottom:0.75rem;}
+  .lib-mode-row{display:flex;gap:0.5rem;margin-bottom:0.6rem;flex-wrap:wrap;}
+  .lib-mode-btn{background:transparent;border:1px solid var(--border);border-radius:4px;font-family:'Inter',sans-serif;font-size:0.7rem;font-weight:600;padding:3px 10px;cursor:pointer;color:var(--text-muted);transition:all 0.15s;}
+  .lib-mode-btn.active{background:var(--purple);border-color:var(--purple);color:#fff;}
+  .lib-content{display:none;}
+  .lib-content.visible{display:block;}
+  .lib-list-row{display:flex;gap:0.5rem;align-items:center;margin-bottom:0.35rem;}
+  .lib-list-row select{flex:1;}
+  .lib-entry-row{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.35rem;}
+  .lib-save-note{font-size:0.63rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-top:0.25rem;}
+  /* Tm */
+  .tm-card{background:#f8faff;border:1px solid #c7d9f5;border-radius:8px;padding:1.2rem;margin-bottom:1rem;}
+  .tm-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+  .tm-box{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.9rem;}
+  .tm-val{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:#1d6fa4;}
+  .tm-label{font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.3rem;}
+  .tm-primer{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-muted);margin-top:0.3rem;word-break:break-all;}
+  .tm-diff-ok{color:var(--accent);font-weight:700;}
+  .tm-diff-warn{color:var(--accent2);font-weight:700;}
+  .pad-out{font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;padding:0.75rem 0.9rem;background:var(--bg);word-break:break-all;white-space:pre-wrap;min-height:52px;}
+  /* Final summary box */
+  .final-summary{background:#f0faf7;border:2px solid var(--accent);border-radius:8px;padding:1.2rem;margin-top:1rem;}
+  .final-summary-head{font-size:0.78rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+  /* Cleaner */
+  .cleaner-stats{display:flex;flex-wrap:wrap;gap:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.7rem 1rem;margin-top:0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.68rem;}
+  .cs-item{display:flex;gap:0.35rem;align-items:baseline;}
+  .cs-val{font-weight:700;font-size:0.85rem;color:var(--purple);}
+  .cs-val.cs-removed{color:var(--red);}
+  .cs-key{color:var(--text-muted);}
+  #cleaner-stats-row{display:none;}
+  .checkbox-label{display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;color:var(--text-mid);cursor:pointer;}
+  input[type=checkbox]{accent-color:var(--purple);width:13px;height:13px;}
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .name-input-row{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;}
+  .name-input-row label{font-size:0.68rem;color:var(--text-muted);white-space:nowrap;min-width:70px;}
+  .dl-section{margin-top:2rem;padding-top:1.5rem;border-top:2px solid var(--border);display:flex;justify-content:flex-end;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Primer Design for Eukaryotic Over Expression</h1>
+    <span class="tag tag-purple">DNA Cleaner</span>
+    <span class="tag tag-orange">Primer Designer</span>
+  </div>
+</header>
+
+<!-- ══ 1. DNA CLEANER ══ -->
+<div class="section">
+  <div class="section-head"><span class="tag tag-purple">1</span><h2>DNA Cleaner — ATGC only</h2></div>
+  <div class="two-col" style="margin-bottom:0.75rem;">
+    <div>
+      <div class="field-label"><span class="dot dot-purple"></span> Raw Input</div>
+      <textarea id="cleaner-input" rows="7" placeholder="Paste anything — FASTA headers, numbers, spaces, IUPAC codes, RNA (U)...&#10;Only A, T, G, C will survive."></textarea>
+    </div>
+    <div>
+      <div class="field-label"><span class="dot dot-purple"></span> Cleaned Output</div>
+      <div class="out-card">
+        <div class="out-card-head">
+          <span class="name name-purple">ATGC Only</span>
+          <div class="out-head-right"><span class="bp-badge" id="cleaner-bp-label"></span><button class="copy-btn" id="cleaner-copy-btn" onclick="cleanerCopy()">copy</button></div>
+        </div>
+        <div class="out-seq" id="cleaner-output-seq" style="max-height:134px;"><span style="color:var(--text-muted);font-style:italic;">cleaned sequence appears here</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-purple" id="clean-btn">Clean Sequence</button>
+    <button class="btn btn-ghost" id="clear-cleaner-btn">Clear</button>
+    <label class="checkbox-label"><input type="checkbox" id="wrap-output" checked> Wrap 60 bp/line</label>
+
+  </div>
+  <div class="cleaner-stats" id="cleaner-stats-row">
+    <div class="cs-item"><span class="cs-val" id="cs-kept">—</span><span class="cs-key">bp kept</span></div>
+    <div class="cs-item"><span class="cs-val cs-removed" id="cs-removed">—</span><span class="cs-key">removed</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-pct">—</span><span class="cs-key">% ATGC</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-a">—</span><span class="cs-key">A</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-t">—</span><span class="cs-key">T</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-g">—</span><span class="cs-key">G</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-c">—</span><span class="cs-key">C</span></div>
+    <div class="cs-item"><span class="cs-val" id="cs-gc">—</span><span class="cs-key">%GC</span></div>
+  </div>
+</div>
+
+<!-- ══ 2. CDS INPUT ══ -->
+<div class="section">
+  <div class="section-head"><span class="tag tag-orange">2</span><h2>CDS / Gene of Interest</h2></div>
+  <div style="max-width:700px;">
+    <div class="field-label"><span class="dot dot-orange"></span> CDS Sequence</div>
+    <textarea id="gene-seq" rows="7" placeholder="Paste the CDS sequence here (plain nucleotides or FASTA)&#10;&#10;e.g. >GeneName&#10;ATGCGATCG..."></textarea>
+    <p class="note">FASTA header (e.g. &gt;GeneName) will be used to name the download file.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-orange" id="extract-btn">Load CDS &amp; Generate Primers</button>
+  </div>
+</div>
+
+<div class="msg msg-error" id="error-msg"></div>
+
+<div id="results">
+  <!-- ══ PRIMER DESIGNER ══ -->
+  <div id="primer-section">
+    <div class="section-head" style="margin-bottom:1rem;"><span class="tag tag-orange">3</span><h2>Primer Designer — CDS</h2></div>
+
+    <!-- Raw primers -->
+    <div class="primer-grid">
+      <div class="out-card">
+        <div class="out-card-head"><span class="name name-blue">Forward Primer <span style="font-weight:400;color:var(--text-muted);">(first 21 bp)</span></span><div class="out-head-right"><span class="bp-badge">21 bp</span><button class="copy-btn" onclick="copyPrimer('fwd-primer-seq')">copy</button></div></div>
+        <div class="primer-seq" id="fwd-primer-seq"></div>
+        <p class="primer-note" style="padding:0 0.9rem 0.6rem;">5′ → 3′ | start of CDS</p>
+      </div>
+      <div class="out-card">
+        <div class="out-card-head"><span class="name name-green">Reverse Primer <span style="font-weight:400;color:var(--text-muted);">(last 21 bp, rev comp)</span></span><div class="out-head-right"><span class="bp-badge">21 bp</span><button class="copy-btn" onclick="copyPrimer('rev-primer-seq')">copy</button></div></div>
+        <div class="primer-seq" id="rev-primer-seq"></div>
+        <p class="primer-note" style="padding:0 0.9rem 0.6rem;">5′ → 3′ | rev comp of last 21 bp | stop codon highlighted</p>
+      </div>
+    </div>
+
+    <!-- Step A: Tag -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="field-label" style="margin-bottom:0.75rem;"><span class="dot dot-orange"></span> Step A — Remove Stop Codon &amp; Append Tag</div>
+      <div class="two-col">
+        <div>
+          <!-- Library panel for tags -->
+          <div class="lib-panel">
+            <div class="lib-mode-row">
+              <button class="lib-mode-btn active" onclick="setLibMode('tag','saved',this)">Use Saved</button>
+              <button class="lib-mode-btn" onclick="setLibMode('tag','new',this)">Add &amp; Save New</button>
+              <button class="lib-mode-btn" onclick="setLibMode('tag','temp',this)">One-Time Use</button>
+            </div>
+            <!-- Saved mode -->
+            <div class="lib-content visible" id="tag-lib-saved">
+              <div class="lib-list-row">
+                <select id="tag-lib-select" onchange="loadFromLib('tag')"><option value="">— select saved tag —</option></select>
+                <button class="btn btn-ghost" style="padding:0.3rem 0.7rem;font-size:0.72rem;" onclick="deleteFromLib('tag')">Delete</button>
+              </div>
+              <div style="font-size:0.65rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="tag-lib-preview"></div>
+            </div>
+            <!-- New mode -->
+            <div class="lib-content" id="tag-lib-new">
+              <div class="lib-entry-row">
+                <input type="text" id="tag-new-name" placeholder="Tag name (e.g. 6xHis)">
+                <input type="text" id="tag-new-seq" placeholder="Tag sequence (ATGC...)">
+              </div>
+              <button class="btn btn-purple" style="font-size:0.72rem;padding:0.35rem 0.9rem;" onclick="saveToLib('tag')">Save to Library</button>
+              <span class="lib-save-note" id="tag-save-msg"></span>
+            </div>
+            <!-- Temp mode -->
+            <div class="lib-content" id="tag-lib-temp">
+              <div class="lib-entry-row">
+                <input type="text" id="tag-temp-name" placeholder="Tag name (for record)">
+                <input type="text" id="tag-temp-seq" placeholder="Tag sequence (ATGC...)">
+              </div>
+            </div>
+          </div>
+          <!-- Hidden working fields populated by library -->
+          <input type="hidden" id="tag-name-input">
+          <input type="hidden" id="tag-input">
+          <p class="primer-note">Workflow: last 21 bp of sense → remove stop → RC → append tag → add RC stop codon → restriction site added in Step B.</p>
+          <div class="btn-row" style="margin-top:0.6rem;">
+            <button class="btn btn-teal" onclick="applyTag()">Apply Tag</button>
+          </div>
+        </div>
+        <div class="out-card">
+          <div class="out-card-head"><span class="name name-green">Rev Primer + Tag + RC Stop</span><div class="out-head-right"><span class="bp-badge" id="mod-rev-bp"></span><button class="copy-btn" onclick="copyPrimer('mod-rev-seq')">copy</button></div></div>
+          <div class="rev-modified-seq" id="mod-rev-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">apply tag to generate</div>
+          <p class="primer-note" style="padding:0 0.9rem 0.4rem;" id="mod-rev-tag-label"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step B: Restriction sites -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="field-label" style="margin-bottom:0.75rem;"><span class="dot dot-purple"></span> Step B — Add Restriction Site Overhangs</div>
+      <div class="two-col" style="margin-bottom:1rem;">
+        <div>
+          <div style="font-size:0.72rem;font-weight:600;color:var(--text-mid);margin-bottom:0.5rem;">Forward Primer Restriction Site</div>
+          <a href="https://www.labtools.us/nebcutter-v3-0/" target="_blank" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.68rem;color:#1d6fa4;text-decoration:none;font-family:'JetBrains Mono',monospace;margin-bottom:0.5rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>NEBcutter v3.0</a>
+            <div class="lib-panel">
+            <div class="lib-mode-row">
+              <button class="lib-mode-btn active" onclick="setLibMode('rs-fwd','saved',this)">Use Saved</button>
+              <button class="lib-mode-btn" onclick="setLibMode('rs-fwd','new',this)">Add &amp; Save New</button>
+              <button class="lib-mode-btn" onclick="setLibMode('rs-fwd','temp',this)">One-Time Use</button>
+            </div>
+            <div class="lib-content visible" id="rs-fwd-lib-saved">
+              <div class="lib-list-row">
+                <select id="rs-fwd-lib-select" onchange="loadFromLib('rs-fwd')"><option value="">— select saved site —</option></select>
+                <button class="btn btn-ghost" style="padding:0.3rem 0.7rem;font-size:0.72rem;" onclick="deleteFromLib('rs-fwd')">Delete</button>
+              </div>
+              <div style="font-size:0.65rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="rs-fwd-lib-preview"></div>
+            </div>
+            <div class="lib-content" id="rs-fwd-lib-new">
+              <div class="lib-entry-row">
+                <input type="text" id="rs-fwd-new-name" placeholder="Site name (e.g. EcoRI)">
+                <input type="text" id="rs-fwd-new-seq" placeholder="Sequence (e.g. GAATTC)">
+              </div>
+              <button class="btn btn-purple" style="font-size:0.72rem;padding:0.35rem 0.9rem;" onclick="saveToLib('rs-fwd')">Save to Library</button>
+              <span class="lib-save-note" id="rs-fwd-save-msg"></span>
+            </div>
+            <div class="lib-content" id="rs-fwd-lib-temp">
+              <div class="lib-entry-row">
+                <input type="text" id="rs-fwd-temp-name" placeholder="Site name (for record)">
+                <input type="text" id="rs-fwd-temp-seq" placeholder="Sequence (ATGC...)">
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="rs-fwd-name">
+          <input type="hidden" id="rs-fwd-input">
+        </div>
+        <div>
+          <div style="font-size:0.72rem;font-weight:600;color:var(--text-mid);margin-bottom:0.5rem;">Reverse Primer Restriction Site</div>
+          <a href="https://www.labtools.us/nebcutter-v3-0/" target="_blank" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.68rem;color:#1d6fa4;text-decoration:none;font-family:'JetBrains Mono',monospace;margin-bottom:0.5rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>NEBcutter v3.0</a>
+            <div class="lib-panel">
+            <div class="lib-mode-row">
+              <button class="lib-mode-btn active" onclick="setLibMode('rs-rev','saved',this)">Use Saved</button>
+              <button class="lib-mode-btn" onclick="setLibMode('rs-rev','new',this)">Add &amp; Save New</button>
+              <button class="lib-mode-btn" onclick="setLibMode('rs-rev','temp',this)">One-Time Use</button>
+            </div>
+            <div class="lib-content visible" id="rs-rev-lib-saved">
+              <div class="lib-list-row">
+                <select id="rs-rev-lib-select" onchange="loadFromLib('rs-rev')"><option value="">— select saved site —</option></select>
+                <button class="btn btn-ghost" style="padding:0.3rem 0.7rem;font-size:0.72rem;" onclick="deleteFromLib('rs-rev')">Delete</button>
+              </div>
+              <div style="font-size:0.65rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="rs-rev-lib-preview"></div>
+            </div>
+            <div class="lib-content" id="rs-rev-lib-new">
+              <div class="lib-entry-row">
+                <input type="text" id="rs-rev-new-name" placeholder="Site name (e.g. XhoI)">
+                <input type="text" id="rs-rev-new-seq" placeholder="Sequence (e.g. CTCGAG)">
+              </div>
+              <button class="btn btn-purple" style="font-size:0.72rem;padding:0.35rem 0.9rem;" onclick="saveToLib('rs-rev')">Save to Library</button>
+              <span class="lib-save-note" id="rs-rev-save-msg"></span>
+            </div>
+            <div class="lib-content" id="rs-rev-lib-temp">
+              <div class="lib-entry-row">
+                <input type="text" id="rs-rev-temp-name" placeholder="Site name (for record)">
+                <input type="text" id="rs-rev-temp-seq" placeholder="Sequence (ATGC...)">
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="rs-rev-name">
+          <input type="hidden" id="rs-rev-input">
+        </div>
+      </div>
+      <div style="margin-bottom:0.75rem;">
+        <button class="btn btn-purple" onclick="applyRestrictionSites()">Apply Restriction Sites</button>
+        <span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.75rem;">Tag + RC stop codon must be applied first.</span>
+      </div>
+      <div class="two-col">
+        <div class="out-card">
+          <div class="out-card-head"><span class="name name-blue">Final Forward Primer</span><div class="out-head-right"><span class="bp-badge" id="final-fwd-bp"></span><button class="copy-btn" onclick="copyPrimer('final-fwd-seq')">copy</button></div></div>
+          <div class="rev-modified-seq" id="final-fwd-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">apply restriction sites to generate</div>
+          <p class="primer-note" style="padding:0 0.9rem 0.4rem;" id="final-fwd-label"></p>
+        </div>
+        <div class="out-card">
+          <div class="out-card-head"><span class="name name-green">Final Reverse Primer</span><div class="out-head-right"><span class="bp-badge" id="final-rev-bp"></span><button class="copy-btn" onclick="copyPrimer('final-rev-seq')">copy</button></div></div>
+          <div class="rev-modified-seq" id="final-rev-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">apply restriction sites to generate</div>
+          <p class="primer-note" style="padding:0 0.9rem 0.4rem;" id="final-rev-label"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step C: Tm + Padding -->
+    <div class="tm-card">
+      <div class="field-label" style="margin-bottom:0.85rem;"><span class="dot" style="background:#1d6fa4;"></span> Step C — Annealing Temperatures &amp; Padding</div>
+      <div class="tm-grid" style="margin-bottom:0.75rem;">
+        <div class="tm-box"><div class="tm-label">Forward Primer Tm</div><div class="tm-val" id="tm-fwd-val">—</div><div class="tm-primer" id="tm-fwd-primer"></div></div>
+        <div class="tm-box"><div class="tm-label">Reverse Primer Tm</div><div class="tm-val" id="tm-rev-val">—</div><div class="tm-primer" id="tm-rev-primer"></div></div>
+      </div>
+      <div id="tm-status" style="font-size:0.75rem;margin-bottom:0.75rem;font-family:'JetBrains Mono',monospace;"></div>
+      <button class="btn btn-orange" onclick="calcTmAndPad()" style="margin-bottom:1rem;">Calculate Tm &amp; Generate Padded Primers</button>
+      <p class="primer-note" style="margin-bottom:1rem;">Uses nearest-neighbor Tm (SantaLucia 1998). Adds up to 6 balanced nucleotides at 5′ end of lower-Tm primer. Padding shown in amber.</p>
+      <div class="two-col">
+        <div class="out-card">
+          <div class="out-card-head"><span class="name name-blue">Padded Forward Primer</span><div class="out-head-right"><span class="bp-badge" id="pad-fwd-bp"></span><button class="copy-btn" onclick="copyPrimer('pad-fwd-seq')">copy</button></div></div>
+          <div class="pad-out" id="pad-fwd-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">calculate to generate</div>
+          <p class="primer-note" style="padding:0 0.9rem 0.4rem;" id="pad-fwd-tm-note"></p>
+        </div>
+        <div class="out-card">
+          <div class="out-card-head"><span class="name name-green">Padded Reverse Primer</span><div class="out-head-right"><span class="bp-badge" id="pad-rev-bp"></span><button class="copy-btn" onclick="copyPrimer('pad-rev-seq')">copy</button></div></div>
+          <div class="pad-out" id="pad-rev-seq" style="color:var(--text-muted);font-style:italic;font-weight:400;">calculate to generate</div>
+          <p class="primer-note" style="padding:0 0.9rem 0.4rem;" id="pad-rev-tm-note"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final Summary Box -->
+    <div class="final-summary" id="final-summary-box" style="display:none;">
+      <div class="final-summary-head">✓ Final Primer Sequences</div>
+      <div class="two-col">
+        <div class="out-card">
+          <div class="out-card-head"><span class="name name-blue">Final Forward Primer</span><div class="out-head-right"><span class="bp-badge" id="summary-fwd-bp"></span><button class="copy-btn" onclick="copyPrimer('summary-fwd-seq')">copy</button></div></div>
+          <div class="pad-out" id="summary-fwd-seq"></div>
+          <p class="primer-note" style="padding:0 0.9rem 0.4rem;" id="summary-fwd-note"></p>
+        </div>
+        <div class="out-card">
+          <div class="out-card-head"><span class="name name-green">Final Reverse Primer</span><div class="out-head-right"><span class="bp-badge" id="summary-rev-bp"></span><button class="copy-btn" onclick="copyPrimer('summary-rev-seq')">copy</button></div></div>
+          <div class="pad-out" id="summary-rev-seq"></div>
+          <p class="primer-note" style="padding:0 0.9rem 0.4rem;" id="summary-rev-note"></p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end primer-section -->
+
+  <!-- Download at bottom -->
+  <div class="dl-section" style="flex-direction:column;align-items:flex-end;gap:0.75rem;">
+    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;justify-content:flex-end;">
+      <label style="font-size:0.72rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">File name:</label>
+      <input type="text" id="download-filename" placeholder="overexpression_primer_design" style="width:220px;font-family:'JetBrains Mono',monospace;">
+      <button class="btn btn-dl" onclick="downloadTxt()">⬇ Download .txt</button>
+      <button class="btn btn-dl" style="background:#1e7a4a;" onclick="downloadXlsx()">⬇ Download .xlsx</button>
+    </div>
+  </div>
+</div><!-- end results -->
+
+<script>
+// ══════════════════════════════════════════
+// Utilities
+// ══════════════════════════════════════════
+function cleanSeq(raw){ return raw.replace(/^>.*$/gm,'').replace(/\s+/g,'').toUpperCase(); }
+function reverseComplement(seq){
+  const comp={A:'T',T:'A',G:'C',C:'G',N:'N',U:'A'};
+  return seq.split('').reverse().map(b=>comp[b]||'N').join('');
+}
+function wrapSeq(seq,width=60){
+  const lines=[];for(let i=0;i<seq.length;i+=width)lines.push(seq.slice(i,i+width));return lines.join('\n');
+}
+
+// ══════════════════════════════════════════
+// Library System (localStorage)
+// ══════════════════════════════════════════
+// keys: 'lib_tags', 'lib_rs'  — arrays of {name, seq}
+function libKey(type){ return type==='tag'?'lib_tags':'lib_rs'; }
+function loadLib(type){ try{ return JSON.parse(localStorage.getItem(libKey(type))||'[]'); }catch(e){ return []; } }
+function saveLib(type,arr){ localStorage.setItem(libKey(type),JSON.stringify(arr)); }
+
+function refreshLibSelect(type){
+  const isTag = type==='tag';
+  const selectId = isTag ? 'tag-lib-select' : (type==='rs-fwd'?'rs-fwd-lib-select':'rs-rev-lib-select');
+  const libType  = isTag ? 'tag' : 'rs';
+  const arr = loadLib(libType);
+  const sel = document.getElementById(selectId);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— select saved —</option>';
+  arr.forEach((item,i)=>{
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = item.name + '  (' + item.seq + ')';
+    sel.appendChild(opt);
+  });
+  if(cur) sel.value = cur;
+}
+
+function loadFromLib(type){
+  const isTag = type==='tag';
+  const selectId = isTag ? 'tag-lib-select' : (type==='rs-fwd'?'rs-fwd-lib-select':'rs-rev-lib-select');
+  const libType  = isTag ? 'tag' : 'rs';
+  const previewId = isTag ? 'tag-lib-preview' : (type==='rs-fwd'?'rs-fwd-lib-preview':'rs-rev-lib-preview');
+  const arr = loadLib(libType);
+  const idx = parseInt(document.getElementById(selectId).value);
+  if(isNaN(idx)) return;
+  const item = arr[idx];
+  if(!item) return;
+  // Populate hidden fields
+  if(isTag){
+    document.getElementById('tag-name-input').value = item.name;
+    document.getElementById('tag-input').value = item.seq;
+  } else {
+    document.getElementById(type+'-name').value = item.name;
+    document.getElementById(type+'-input').value = item.seq;
+  }
+  document.getElementById(previewId).textContent = item.name + ': ' + item.seq;
+}
+
+function saveToLib(type){
+  const isTag = type==='tag';
+  const nameId = isTag ? 'tag-new-name' : type+'-new-name';
+  const seqId  = isTag ? 'tag-new-seq'  : type+'-new-seq';
+  const msgId  = isTag ? 'tag-save-msg' : type+'-save-msg';
+  const libType= isTag ? 'tag' : 'rs';
+  const name = document.getElementById(nameId).value.trim();
+  const seq  = document.getElementById(seqId).value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase();
+  if(!name||!seq){ document.getElementById(msgId).textContent='Name and sequence required.'; return; }
+  const arr = loadLib(libType);
+  if(arr.find(x=>x.name.toLowerCase()===name.toLowerCase())){
+    document.getElementById(msgId).textContent='Name already exists — delete first to replace.'; return;
+  }
+  arr.push({name,seq}); saveLib(libType,arr);
+  // Also set working fields
+  if(isTag){ document.getElementById('tag-name-input').value=name; document.getElementById('tag-input').value=seq; }
+  else { document.getElementById(type+'-name').value=name; document.getElementById(type+'-input').value=seq; }
+  document.getElementById(msgId).textContent='✓ Saved!';
+  setTimeout(()=>{ document.getElementById(msgId).textContent=''; },2000);
+  // Refresh all selects that use this lib
+  if(isTag){ refreshLibSelect('tag'); }
+  else { refreshLibSelect('rs-fwd'); refreshLibSelect('rs-rev'); }
+}
+
+function deleteFromLib(type){
+  const isTag = type==='tag';
+  const selectId = isTag ? 'tag-lib-select' : (type==='rs-fwd'?'rs-fwd-lib-select':'rs-rev-lib-select');
+  const libType  = isTag ? 'tag' : 'rs';
+  const idx = parseInt(document.getElementById(selectId).value);
+  if(isNaN(idx)){ alert('Select an item to delete.'); return; }
+  const arr = loadLib(libType);
+  arr.splice(idx,1); saveLib(libType,arr);
+  if(isTag){ refreshLibSelect('tag'); }
+  else { refreshLibSelect('rs-fwd'); refreshLibSelect('rs-rev'); }
+}
+
+function setLibMode(type, mode, btn){
+  const prefix = type==='tag' ? 'tag' : type;
+  // deactivate all buttons in this group
+  btn.closest('.lib-panel').querySelectorAll('.lib-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // hide all panels
+  ['saved','new','temp'].forEach(m=>{
+    const el = document.getElementById(prefix+'-lib-'+m);
+    if(el){ el.classList.remove('visible'); }
+  });
+  const target = document.getElementById(prefix+'-lib-'+mode);
+  if(target) target.classList.add('visible');
+  // Update hidden fields based on temp inputs when switching to temp
+  if(mode==='temp'){
+    const n=document.getElementById(prefix+'-temp-name');
+    const s=document.getElementById(prefix+'-temp-seq');
+    if(n&&s){
+      n.addEventListener('input',()=>syncTempFields(type));
+      s.addEventListener('input',()=>syncTempFields(type));
+    }
+  }
+}
+
+function syncTempFields(type){
+  const prefix = type==='tag' ? 'tag' : type;
+  const n = document.getElementById(prefix+'-temp-name')?.value.trim()||'';
+  const s = document.getElementById(prefix+'-temp-seq')?.value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase()||'';
+  if(type==='tag'){ document.getElementById('tag-name-input').value=n; document.getElementById('tag-input').value=s; }
+  else { document.getElementById(type+'-name').value=n; document.getElementById(type+'-input').value=s; }
+}
+
+// ══════════════════════════════════════════
+// Nearest-Neighbor Tm (SantaLucia 1998)
+// ══════════════════════════════════════════
+const NN_DH={AA:-7.9,AT:-7.2,AC:-8.4,AG:-7.8,TA:-7.2,TT:-7.9,TC:-8.2,TG:-8.5,CA:-8.5,CT:-7.8,CC:-8.0,CG:-10.6,GA:-8.2,GT:-8.4,GC:-9.8,GG:-8.0};
+const NN_DS={AA:-22.2,AT:-20.4,AC:-22.4,AG:-21.0,TA:-21.3,TT:-22.2,TC:-22.2,TG:-22.7,CA:-22.7,CT:-21.0,CC:-19.9,CG:-27.2,GA:-22.2,GT:-22.4,GC:-24.4,GG:-19.9};
+const R_=1.987;
+function calcTm(seq){
+  seq=seq.toUpperCase().replace(/[^ATGC]/g,'');
+  if(seq.length<2)return 0;
+  let dH=0.2,dS=-5.7;
+  if(seq[0]==='A'||seq[0]==='T'){dH+=2.3;dS+=4.1;}
+  if(seq[seq.length-1]==='A'||seq[seq.length-1]==='T'){dH+=2.3;dS+=4.1;}
+  for(let i=0;i<seq.length-1;i++){const di=seq[i]+seq[i+1];dH+=NN_DH[di]||0;dS+=NN_DS[di]||0;}
+  const tm=(dH*1000)/(dS+R_*Math.log(250e-9/4))-273.15;
+  return tm+16.6*Math.log10(0.05);
+}
+
+// ══════════════════════════════════════════
+// Flanking Extractor
+// ══════════════════════════════════════════
+function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.className='msg msg-error';el.style.display='block';document.getElementById('results').style.display='none';}
+function clearError(){const el=document.getElementById('error-msg');el.style.display='none';el.className='msg msg-error';}
+
+document.getElementById('extract-btn').addEventListener('click',()=>{
+  clearError();
+  const rawGene=document.getElementById('gene-seq').value.trim();
+  if(!rawGene){showError('Please paste a CDS sequence.');return;}
+  const geneSeq=cleanSeq(rawGene);
+  if(!geneSeq.length){showError('CDS sequence appears empty after cleaning.');return;}
+  currentCDSSeq=geneSeq;
+  currentGeneName=extractGeneName(rawGene);
+  updateFilename();
+  populatePrimers(geneSeq);
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+// ══════════════════════════════════════════
+// Primer Designer
+// ══════════════════════════════════════════
+let currentGeneName = '';   // extracted from FASTA header of CDS input
+
+function extractGeneName(raw) {
+  // Grab first word after '>' on the header line, e.g. ">BAB2_0757 CDS" → "BAB2_0757"
+  const m = raw.match(/^>\s*(\S+)/m);
+  return m ? m[1] : '';
+}
+
+function updateFilename() {
+  const gene = currentGeneName || '';
+  const tag  = currentTagName  || '';
+  const parts = [gene, tag, 'primers_overexp'].filter(Boolean);
+  const fname = parts.join('_');
+  const el = document.getElementById('download-filename');
+  if (el) el.value = fname;
+}
+
+const STOP_CODONS=['TAG','TAA','TGA'];
+// RC stop codons (complement of stop, still 5'→3' for the reverse primer):
+// RC of TAG=CTA, RC of TAA=TTA, RC of TGA=TCA
+const RC_STOPS={TAG:'CTA',TAA:'TTA',TGA:'TCA'};
+
+let currentUpstreamSeq = '';
+let currentCDSSeq = '';
+let currentDownstreamSeq = '';
+let currentFwd21='';
+let currentRevPrimer21='';
+let currentModRev='';      // RC(sense no-stop) + tag + RC_stop
+let currentFinalFwd='';
+let currentFinalRev='';
+let currentTagName='';
+let currentTagSeq='';
+let currentFwdRSName='';
+let currentRevRSName='';
+
+function populatePrimers(geneSeq){
+  if(geneSeq.length<21){document.getElementById('primer-section').style.display='none';return;}
+  const fwd=geneSeq.slice(0,21);
+  const last21=geneSeq.slice(-21);
+  const revRC=reverseComplement(last21);
+  currentFwd21=fwd;currentRevPrimer21=last21;currentModRev='';currentFinalFwd='';currentFinalRev='';
+  currentTagName='';currentTagSeq='';currentFwdRSName='';currentRevRSName='';
+
+  document.getElementById('fwd-primer-seq').textContent=fwd;
+  const revEl=document.getElementById('rev-primer-seq');
+  if(STOP_CODONS.includes(last21.slice(-3))){
+    revEl.innerHTML='<span class="stop-codon-highlight">'+revRC.slice(0,3)+'</span><span class="seq-part-body">'+revRC.slice(3)+'</span>';
+  }else{revEl.textContent=revRC;}
+
+  const pending='<span style="color:var(--text-muted);font-style:italic;font-weight:400;">apply to generate</span>';
+  ['mod-rev-seq','final-fwd-seq','final-rev-seq'].forEach(id=>document.getElementById(id).innerHTML=pending);
+  ['mod-rev-bp','final-fwd-bp','final-rev-bp','pad-fwd-bp','pad-rev-bp','summary-fwd-bp','summary-rev-bp'].forEach(id=>document.getElementById(id).textContent='');
+  ['pad-fwd-seq','pad-rev-seq','summary-fwd-seq','summary-rev-seq'].forEach(id=>{document.getElementById(id).innerHTML='<span style="color:var(--text-muted);font-style:italic;font-weight:400;">calculate to generate</span>';});
+  ['mod-rev-tag-label','final-fwd-label','final-rev-label','pad-fwd-tm-note','pad-rev-tm-note','tm-status','summary-fwd-note','summary-rev-note'].forEach(id=>{document.getElementById(id).textContent='';});
+  document.getElementById('tm-fwd-val').textContent='—';
+  document.getElementById('tm-rev-val').textContent='—';
+  document.getElementById('tm-fwd-primer').textContent='';
+  document.getElementById('tm-rev-primer').textContent='';
+  document.getElementById('final-summary-box').style.display='none';
+  document.getElementById('primer-section').style.display='block';
+}
+
+function getWorkingTag(){
+  // Try to get name/seq from whichever mode is active
+  const n=document.getElementById('tag-name-input').value.trim();
+  const s=document.getElementById('tag-input').value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase();
+  // also check temp fields directly (in case input events haven't fired)
+  const tn=document.getElementById('tag-temp-name')?.value.trim()||'';
+  const ts=document.getElementById('tag-temp-seq')?.value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase()||'';
+  return {name: n||tn, seq: s||ts};
+}
+function getWorkingRS(type){
+  const n=document.getElementById(type+'-name').value.trim();
+  const s=document.getElementById(type+'-input').value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase();
+  const tn=document.getElementById(type+'-temp-name')?.value.trim()||'';
+  const ts=document.getElementById(type+'-temp-seq')?.value.trim().replace(/[^ATGCatgc]/g,'').toUpperCase()||'';
+  return {name: n||tn, seq: s||ts};
+}
+
+function applyTag(){
+  if(!currentRevPrimer21)return;
+  const {name:tagName, seq:tagSeq}=getWorkingTag();
+
+  const possibleStop=currentRevPrimer21.slice(-3);
+  if(!STOP_CODONS.includes(possibleStop)){
+    alert('No stop codon (TAG, TAA, or TGA) in last 3 bp of CDS: "'+possibleStop+'"\n\nPrimer was not modified.');
+    return;
+  }
+
+  const rcStop=RC_STOPS[possibleStop]; // e.g. TAG→CTA, TAA→TTA, TGA→TCA
+  const senseNoStop=currentRevPrimer21.slice(0,18);
+  const rcBase=reverseComplement(senseNoStop);
+  // Final: RC(CDS no-stop) + tag + RC_stop_codon
+  const combined=rcBase+tagSeq+rcStop;
+  currentModRev=combined;
+  currentTagName=tagName;
+  currentTagSeq=tagSeq;
+
+  const modEl=document.getElementById('mod-rev-seq');
+  modEl.innerHTML=
+    '<span class="seq-part-body">'+rcBase+'</span>'+
+    (tagSeq?'<span class="seq-part-tag">'+tagSeq+'</span>':'')+
+    '<span class="seq-part-stop">'+rcStop+'</span>';
+  document.getElementById('mod-rev-bp').textContent=combined.length+' bp';
+  updateFilename();
+  document.getElementById('mod-rev-tag-label').textContent=
+    [tagName?'Tag: '+tagName:'', 'RC stop: '+rcStop].filter(Boolean).join('  |  ');
+
+  const pending='<span style="color:var(--text-muted);font-style:italic;font-weight:400;">apply restriction sites to generate</span>';
+  ['final-fwd-seq','final-rev-seq'].forEach(id=>document.getElementById(id).innerHTML=pending);
+  ['final-fwd-bp','final-rev-bp'].forEach(id=>document.getElementById(id).textContent='');
+}
+
+function applyRestrictionSites(){
+  if(!currentFwd21){alert('Run the extractor first.');return;}
+  const {name:fwdRSName,seq:fwdRS}=getWorkingRS('rs-fwd');
+  const {name:revRSName,seq:revRS}=getWorkingRS('rs-rev');
+  currentFwdRSName=fwdRSName;currentRevRSName=revRSName;
+
+  // Forward: RS + fwd primer
+  const finalFwd=fwdRS+currentFwd21;
+  currentFinalFwd=finalFwd;
+  document.getElementById('final-fwd-seq').innerHTML=
+    (fwdRS?'<span class="seq-part-rs">'+fwdRS+'</span>':'')+
+    '<span class="seq-part-body">'+currentFwd21+'</span>';
+  document.getElementById('final-fwd-bp').textContent=finalFwd.length+' bp';
+  document.getElementById('final-fwd-label').textContent=fwdRSName?'RS: '+fwdRSName:'';
+
+  // Reverse: (mod rev if tag applied, else plain RC) + RS
+  const revBase=currentModRev||reverseComplement(currentRevPrimer21);
+  const finalRev=revBase+revRS;
+  currentFinalRev=finalRev;
+
+  if(currentModRev){
+    const senseNoStop=currentRevPrimer21.slice(0,18);
+    const rcBase=reverseComplement(senseNoStop);
+    const rcStop=RC_STOPS[currentRevPrimer21.slice(-3)]||'';
+    const tag=currentTagSeq;
+    document.getElementById('final-rev-seq').innerHTML=
+      '<span class="seq-part-body">'+rcBase+'</span>'+
+      (tag?'<span class="seq-part-tag">'+tag+'</span>':'')+
+      (rcStop?'<span class="seq-part-stop">'+rcStop+'</span>':'')+
+      (revRS?'<span class="seq-part-rs">'+revRS+'</span>':'');
+    document.getElementById('final-rev-label').textContent=
+      [currentTagName?'Tag: '+currentTagName:'', revRSName?'RS: '+revRSName:''].filter(Boolean).join('  |  ');
+  }else{
+    const plainRC=reverseComplement(currentRevPrimer21);
+    document.getElementById('final-rev-seq').innerHTML=
+      '<span class="seq-part-body">'+plainRC+'</span>'+
+      (revRS?'<span class="seq-part-rs">'+revRS+'</span>':'');
+    document.getElementById('final-rev-label').textContent=revRSName?'RS: '+revRSName:'';
+  }
+  document.getElementById('final-rev-bp').textContent=finalRev.length+' bp';
+}
+
+// ══════════════════════════════════════════
+// Tm & Padding
+// ══════════════════════════════════════════
+function randomPaddingNts(n){
+  const pool=[];
+  const gc=Math.round(n*0.5);
+  for(let i=0;i<gc;i++)pool.push(['G','C'][Math.floor(Math.random()*2)]);
+  for(let i=0;i<n-gc;i++)pool.push(['A','T'][Math.floor(Math.random()*2)]);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return pool.join('');
+}
+
+function calcTmAndPad(){
+  const fwdBase=currentFinalFwd||currentFwd21;
+  const revBase=currentFinalRev||(currentModRev||reverseComplement(currentRevPrimer21));
+  if(!fwdBase||!revBase){alert('Please complete Steps A and B first (or run extractor if skipping them).');return;}
+
+  const tmFwd=calcTm(fwdBase);
+  const tmRev=calcTm(revBase);
+  document.getElementById('tm-fwd-val').textContent=tmFwd.toFixed(1)+' °C';
+  document.getElementById('tm-rev-val').textContent=tmRev.toFixed(1)+' °C';
+  document.getElementById('tm-fwd-primer').textContent=fwdBase;
+  document.getElementById('tm-rev-primer').textContent=revBase;
+
+  const statusEl=document.getElementById('tm-status');
+
+  // Both primers always get random nucleotides:
+  //   Forward → prepended at 5′ end
+  //   Reverse → appended at 3′ end (after restriction site)
+  // Goal: bring Tms within 1 °C of each other by trying 1–6 nt on the lower-Tm
+  // primer, while the other gets 1 nt minimum for binding benefit.
+
+  // Both primers get exactly 6 nucleotides.
+  // Forward: prepended at 5′. Reverse: appended at 3′.
+  // Strategy: generate candidate pads with GC content tuned to push each
+  // primer's Tm toward the midpoint, then pick the best-matching pair
+  // from 400 attempts.
+  //   - Lower-Tm primer needs GC-rich pad to raise its Tm → prefer GC bases
+  //   - Higher-Tm primer needs AT-rich pad to lower its Tm → prefer AT bases
+  const midTarget = (tmFwd + tmRev) / 2;
+
+  function paddingWithBias(n, gcFraction){
+    // gcFraction 0.0–1.0: fraction of G/C bases in the generated sequence
+    const pool = [];
+    const gcCount = Math.round(n * gcFraction);
+    const atCount = n - gcCount;
+    for(let i=0;i<gcCount;i++) pool.push(['G','C'][Math.floor(Math.random()*2)]);
+    for(let i=0;i<atCount;i++) pool.push(['A','T'][Math.floor(Math.random()*2)]);
+    // Fisher-Yates shuffle
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    return pool.join('');
+  }
+
+  // Determine which needs raising vs lowering
+  const fwdNeedsRaise = tmFwd < midTarget;  // fwd Tm below mid → needs GC-rich
+  const revNeedsRaise = tmRev < midTarget;  // rev Tm below mid → needs GC-rich
+  const fwdGcBias = fwdNeedsRaise ? 0.8 : 0.2;  // GC-rich to raise, AT-rich to lower
+  const revGcBias = revNeedsRaise ? 0.8 : 0.2;
+
+  let bestPadFwd = paddingWithBias(6, fwdGcBias);
+  let bestPadRev = paddingWithBias(6, revGcBias);
+  let bestDiff   = Math.abs(calcTm(bestPadFwd+fwdBase) - calcTm(revBase+bestPadRev));
+
+  for(let attempt = 0; attempt < 400; attempt++){
+    const pf = paddingWithBias(6, fwdGcBias);
+    const pr = paddingWithBias(6, revGcBias);
+    const tf = calcTm(pf + fwdBase);
+    const tr = calcTm(revBase + pr);
+    const d  = Math.abs(tf - tr);
+    if(d < bestDiff){
+      bestDiff   = d;
+      bestPadFwd = pf;
+      bestPadRev = pr;
+      if(d <= 0.5) break;
+    }
+  }
+
+  const padFwdSeq  = bestPadFwd;
+  const padRevSeq  = bestPadRev;
+  const paddedFwd  = padFwdSeq + fwdBase;
+  const paddedRev  = revBase + padRevSeq;
+  const finalTmFwd = calcTm(paddedFwd);
+  const finalTmRev = calcTm(paddedRev);
+  const finalDiff  = Math.abs(finalTmFwd - finalTmRev);
+  const diff       = Math.abs(tmFwd - tmRev);
+
+  statusEl.innerHTML = finalDiff <= 1.0
+    ? '<span class="tm-diff-ok">✓ Tms within 1 °C after padding ('+finalTmFwd.toFixed(1)+' / '+finalTmRev.toFixed(1)+' °C).</span>'
+    : '<span class="tm-diff-warn">⚠ Tm difference: '+finalDiff.toFixed(1)+' °C after padding (was '+diff.toFixed(1)+' °C) — '+finalTmFwd.toFixed(1)+' / '+finalTmRev.toFixed(1)+' °C.</span>';
+
+  // Forward: padding at 5′
+  document.getElementById('pad-fwd-seq').innerHTML=
+    '<span class="seq-part-pad">'+padFwdSeq+'</span>'+
+    '<span class="seq-part-body">'+fwdBase+'</span>';
+  document.getElementById('pad-fwd-bp').textContent=paddedFwd.length+' bp';
+  document.getElementById('pad-fwd-tm-note').textContent=
+    'Tm: '+finalTmFwd.toFixed(1)+' °C  (+'+padFwdSeq.length+' bp at 5′: '+padFwdSeq+')';
+
+  // Reverse: padding at 3′
+  document.getElementById('pad-rev-seq').innerHTML=
+    '<span class="seq-part-body">'+revBase+'</span>'+
+    '<span class="seq-part-pad">'+padRevSeq+'</span>';
+  document.getElementById('pad-rev-bp').textContent=paddedRev.length+' bp';
+  document.getElementById('pad-rev-tm-note').textContent=
+    'Tm: '+finalTmRev.toFixed(1)+' °C  (+'+padRevSeq.length+' bp at 3′: '+padRevSeq+')';
+
+  // ── Final Summary Box ──
+  const sumBox=document.getElementById('final-summary-box');
+  document.getElementById('summary-fwd-seq').innerHTML=document.getElementById('pad-fwd-seq').innerHTML;
+  document.getElementById('summary-rev-seq').innerHTML=document.getElementById('pad-rev-seq').innerHTML;
+  document.getElementById('summary-fwd-bp').textContent=paddedFwd.length+' bp';
+  document.getElementById('summary-rev-bp').textContent=paddedRev.length+' bp';
+  const fwdNotes=[currentFwdRSName?'RS: '+currentFwdRSName:''].filter(Boolean).join(' | ');
+  const revNotes=[currentTagName?'Tag: '+currentTagName:'',currentRevRSName?'RS: '+currentRevRSName:''].filter(Boolean).join(' | ');
+  document.getElementById('summary-fwd-note').textContent='Tm: '+finalTmFwd.toFixed(1)+' °C'+(fwdNotes?' | '+fwdNotes:'');
+  document.getElementById('summary-rev-note').textContent='Tm: '+finalTmRev.toFixed(1)+' °C'+(revNotes?' | '+revNotes:'');
+  sumBox.style.display='block';
+  sumBox.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ══════════════════════════════════════════
+// Copy helpers
+// ══════════════════════════════════════════
+function copyPrimer(id){
+  const el=document.getElementById(id);
+  const text=el.textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const card=el.closest('.out-card');
+    const btn=card?card.querySelector('.copy-btn'):null;
+    if(!btn)return;
+    const orig=btn.textContent;btn.textContent='copied!';btn.style.color='var(--accent)';
+    setTimeout(()=>{btn.textContent=orig;btn.style.color='';},1500);
+  });
+}
+// copySeq and combinedCopy removed (no flanking output)
+
+// ══════════════════════════════════════════
+// Download
+// ══════════════════════════════════════════
+function getText(id){return(document.getElementById(id)?.textContent||'').trim();}
+function getVal(id){return(document.getElementById(id)?.value||'').trim();}
+function downloadTxt(){
+  const lines=[];
+  const hr='═'.repeat(60);const hr2='─'.repeat(60);
+  lines.push('PRIMER DESIGN FOR EUKARYOTIC OVER EXPRESSION');
+  lines.push('Generated: '+new Date().toLocaleString());
+  lines.push(hr);
+  if(document.getElementById('results').style.display!=='none'){
+    lines.push('');lines.push('FLANKING SEQUENCE EXTRACTION');lines.push(hr2);
+    lines.push('CDS bp:         '+getText('stat-gene'));
+    lines.push('Upstream bp:    '+getText('stat-up'));
+    lines.push('Downstream bp:  '+getText('stat-down'));
+    lines.push('Total bp:       '+getText('stat-total'));
+    lines.push('Gene start:     '+getText('stat-pos')+' (0-based)');
+    lines.push('Strand:         '+getText('stat-strand'));
+
+  }
+  if(document.getElementById('primer-section').style.display!=='none'){
+    lines.push('');lines.push('PRIMER DESIGN');lines.push(hr2);
+    lines.push('Forward Primer (21 bp):  '+getText('fwd-primer-seq'));
+    lines.push('Reverse Primer (21 bp):  '+getText('rev-primer-seq'));
+    const tagSeq=getText('mod-rev-seq');
+    if(tagSeq&&!tagSeq.includes('apply')){
+      lines.push('');lines.push('Step A — Tag & RC Stop');
+      if(currentTagName)lines.push('Tag name:        '+currentTagName);
+      lines.push('Rev + Tag + RC stop:  '+tagSeq+'  ('+getText('mod-rev-bp')+')');
+    }
+    const finalFwd=getText('final-fwd-seq');
+    if(finalFwd&&!finalFwd.includes('apply')){
+      lines.push('');lines.push('Step B — Restriction Sites');
+      if(currentFwdRSName)lines.push('Fwd RS:          '+currentFwdRSName);
+      lines.push('Final Fwd:       '+finalFwd+'  ('+getText('final-fwd-bp')+')');
+      if(currentRevRSName)lines.push('Rev RS:          '+currentRevRSName);
+      lines.push('Final Rev:       '+getText('final-rev-seq')+'  ('+getText('final-rev-bp')+')');
+    }
+    const tmFwd=getText('tm-fwd-val');
+    if(tmFwd!=='—'){
+      lines.push('');lines.push('Step C — Annealing Temperatures & Padding');
+      lines.push('Fwd Tm:          '+tmFwd);
+      lines.push('Rev Tm:          '+getText('tm-rev-val'));
+      lines.push(getText('tm-status').replace(/[✓⚠]/g,'').trim());
+      const padFwd=getText('pad-fwd-seq');
+      if(padFwd&&!padFwd.includes('calculate')){
+        lines.push('Padded Fwd:      '+padFwd+'  ('+getText('pad-fwd-bp')+')');
+        lines.push('                 '+getText('pad-fwd-tm-note'));
+        lines.push('Padded Rev:      '+getText('pad-rev-seq')+'  ('+getText('pad-rev-bp')+')');
+        lines.push('                 '+getText('pad-rev-tm-note'));
+      }
+    }
+    const sumFwd=getText('summary-fwd-seq');
+    if(sumFwd&&!sumFwd.includes('calculate')){
+      lines.push('');lines.push('FINAL PRIMER SEQUENCES');lines.push(hr2);
+      lines.push('Forward: '+sumFwd+'  ('+getText('summary-fwd-bp')+')');
+      lines.push('         '+getText('summary-fwd-note'));
+      lines.push('Reverse: '+getText('summary-rev-seq')+'  ('+getText('summary-rev-bp')+')');
+      lines.push('         '+getText('summary-rev-note'));
+    }
+  }
+  lines.push('');lines.push(hr);lines.push('End of report');
+  const blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const fname=(document.getElementById('download-filename').value.trim()||'overexpression_primer_design').replace(/[^a-zA-Z0-9_\-]/g,'_');
+  a.download=fname+'.txt';a.click();
+}
+
+// ══════════════════════════════════════════
+// Download as XLSX (using SheetJS via CDN)
+// ══════════════════════════════════════════
+function downloadXlsx(){
+  // Load SheetJS if not already loaded
+  if(!window.XLSX){
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload=_buildXlsx;
+    document.head.appendChild(script);
+  }else{_buildXlsx();}
+}
+
+function _buildXlsx(){
+  const wb=XLSX.utils.book_new();
+  const fname=(document.getElementById('download-filename').value.trim()||'overexpression_primer_design').replace(/[^a-zA-Z0-9_\-]/g,'_');
+
+  // ── Rich-text helpers ──────────────────────────────────────────────────
+  // SheetJS rich text: array of {t: text, s: style} runs
+  // Bold=tag, Italic=restriction site, Underline=RC stop codon
+  const S_NORM  = {font:{name:'Courier New',sz:10}};
+  const S_BOLD  = {font:{name:'Courier New',sz:10,bold:true}};           // tag seq
+  const S_ITAL  = {font:{name:'Courier New',sz:10,italic:true}};          // restriction site
+  const S_ULINE = {font:{name:'Courier New',sz:10,underline:true}};       // RC stop codon
+  const S_HEAD  = {font:{name:'Calibri',sz:11,bold:true}};
+  const S_SECT  = {font:{name:'Calibri',sz:10,bold:true,color:{rgb:'1A7A4A'}}};
+
+  // Collect current values
+  const tagSeqCur  = currentTagSeq  || '';
+  const fwdRSCur   = getWorkingRS('rs-fwd').seq || '';
+  const revRSCur   = getWorkingRS('rs-rev').seq || '';
+  // RC stop from last 3bp of CDS sense strand
+  const RC_STOPS_LOCAL = {TAG:'CTA',TAA:'TTA',TGA:'TCA'};
+  const rcStopCur  = currentRevPrimer21 ? (RC_STOPS_LOCAL[currentRevPrimer21.slice(-3)]||'') : '';
+
+  // Build a rich-text cell for a sequence string, marking known fragments
+  function richCell(seq) {
+    if(!seq) return {v:'',t:'s'};
+    // Split seq into annotated runs
+    const runs = [];
+    let remaining = seq;
+    while(remaining.length > 0) {
+      // Find earliest match of tag, fwdRS, revRS, rcStop
+      let bestIdx = remaining.length, bestLen = 0, bestStyle = S_NORM;
+      const candidates = [];
+      if(tagSeqCur)  candidates.push({frag:tagSeqCur,  style:S_BOLD});
+      if(fwdRSCur)   candidates.push({frag:fwdRSCur,   style:S_ITAL});
+      if(revRSCur)   candidates.push({frag:revRSCur,   style:S_ITAL});
+      if(rcStopCur)  candidates.push({frag:rcStopCur,  style:S_ULINE});
+      for(const {frag,style} of candidates){
+        if(!frag) continue;
+        const idx = remaining.indexOf(frag);
+        if(idx !== -1 && (idx < bestIdx || (idx === bestIdx && frag.length > bestLen))){
+          bestIdx = idx; bestLen = frag.length; bestStyle = style;
+        }
+      }
+      if(bestIdx === remaining.length){
+        // no more matches
+        runs.push({t: remaining, s: S_NORM});
+        break;
+      }
+      if(bestIdx > 0) runs.push({t: remaining.slice(0, bestIdx), s: S_NORM});
+      runs.push({t: remaining.slice(bestIdx, bestIdx+bestLen), s: bestStyle});
+      remaining = remaining.slice(bestIdx+bestLen);
+    }
+    if(runs.length === 1 && runs[0].s === S_NORM) return {v:seq, t:'s'}; // plain
+    return {t:'s', v:seq, r: runs.map(r=>({t:r.t,s:r.s}))};
+  }
+
+  function cell(v, style){
+    const c={v:v||'',t:'s'};
+    if(style)c.s=style;
+    return c;
+  }
+  function seqCell(seq){ return richCell(seq); }
+
+  // Helper: write a row of mixed plain/rich cells to a sheet at given row index
+  // We'll collect rows as arrays of cell objects and place them manually.
+  function buildSheet(rowsData){
+    // rowsData: array of arrays of {v, t, s?, r?} or plain strings
+    const ws = {};
+    let maxCol = 0;
+    rowsData.forEach((row, R) => {
+      row.forEach((cellVal, C) => {
+        const addr = XLSX.utils.encode_cell({r:R,c:C});
+        if(typeof cellVal === 'string' || typeof cellVal === 'number'){
+          ws[addr] = {v: cellVal, t: typeof cellVal==='number'?'n':'s'};
+        } else if(cellVal && typeof cellVal === 'object'){
+          ws[addr] = cellVal;
+        }
+        if(C > maxCol) maxCol = C;
+      });
+    });
+    ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rowsData.length-1,c:maxCol}});
+    return ws;
+  }
+
+  // ── Sheet 1: Summary ──────────────────────────────────────────────────
+  const R1 = []; // rows
+
+  R1.push([cell('Primer Design for Eukaryotic Over Expression', S_HEAD)]);
+  R1.push([cell('Generated: '+new Date().toLocaleString())]);
+  R1.push([]);
+
+  if(document.getElementById('results').style.display!=='none'){
+    R1.push([cell('FLANKING EXTRACTION', S_SECT)]);
+    R1.push([cell('Gene / CDS name'), cell(currentGeneName||'')]);
+    R1.push([cell('CDS bp'),          cell(getText('stat-gene'))]);
+    R1.push([cell('Upstream bp'),     cell(getText('stat-up'))]);
+    R1.push([cell('Downstream bp'),   cell(getText('stat-down'))]);
+    R1.push([cell('Total bp'),        cell(getText('stat-total'))]);
+    R1.push([cell('Gene start (0-based)'), cell(getText('stat-pos'))]);
+    R1.push([cell('Strand'),          cell(getText('stat-strand'))]);
+    R1.push([]);
+    R1.push([cell('SEQUENCES', S_SECT)]);
+    if(currentUpstreamSeq){
+      R1.push([cell('Upstream Flank ('+getText('up-bp-label')+')'), seqCell(currentUpstreamSeq)]);
+    }
+    if(currentCDSSeq){
+      R1.push([cell('CDS ('+getText('gene-bp-label')+')'), seqCell(currentCDSSeq)]);
+    }
+    if(currentDownstreamSeq){
+      R1.push([cell('Downstream Flank ('+getText('down-bp-label')+')'), seqCell(currentDownstreamSeq)]);
+    }
+    R1.push([]);
+  }
+
+  if(document.getElementById('primer-section').style.display!=='none'){
+    R1.push([cell('PRIMER DESIGN', S_SECT)]);
+    R1.push([cell('Forward (21 bp)'),     seqCell(getText('fwd-primer-seq'))]);
+    R1.push([cell('Reverse (21 bp, RC)'), seqCell(getText('rev-primer-seq'))]);
+    R1.push([]);
+
+    const tagSeqDisp=getText('mod-rev-seq');
+    if(tagSeqDisp&&!tagSeqDisp.includes('apply')){
+      R1.push([cell('STEP A — TAG & RC STOP CODON', S_SECT)]);
+      R1.push([cell('Tag name'),           cell(currentTagName)]);
+      R1.push([cell('Tag sequence'),       seqCell(tagSeqCur)]);
+      R1.push([cell('RC stop codon'),      cell(rcStopCur),' (underlined in primer sequences)']);
+      R1.push([cell('Rev + Tag + RC Stop'),seqCell(tagSeqDisp), cell(getText('mod-rev-bp'))]);
+      R1.push([]);
+    }
+
+    const finalFwd=getText('final-fwd-seq');
+    if(finalFwd&&!finalFwd.includes('apply')){
+      R1.push([cell('STEP B — RESTRICTION SITES', S_SECT)]);
+      R1.push([cell('Fwd RS name'),        cell(currentFwdRSName)]);
+      R1.push([cell('Fwd RS sequence'),    seqCell(fwdRSCur)]);
+      R1.push([cell('Final Forward Primer'),seqCell(finalFwd), cell(getText('final-fwd-bp'))]);
+      R1.push([]);
+      R1.push([cell('Rev RS name'),        cell(currentRevRSName)]);
+      R1.push([cell('Rev RS sequence'),    seqCell(revRSCur)]);
+      R1.push([cell('Final Reverse Primer'),seqCell(getText('final-rev-seq')), cell(getText('final-rev-bp'))]);
+      R1.push([]);
+    }
+
+    const tmFwd=getText('tm-fwd-val');
+    if(tmFwd!=='—'){
+      R1.push([cell('STEP C — Tm & PADDING', S_SECT)]);
+      R1.push([cell('Forward Tm'), cell(tmFwd)]);
+      R1.push([cell('Reverse Tm'), cell(getText('tm-rev-val'))]);
+      R1.push([cell(getText('tm-status').replace(/[✓⚠]/g,'').trim())]);
+      const padFwd=getText('pad-fwd-seq');
+      if(padFwd&&!padFwd.includes('calculate')){
+        R1.push([cell('Padded Forward'), seqCell(padFwd), cell(getText('pad-fwd-bp'))]);
+        R1.push([cell(''),              cell(getText('pad-fwd-tm-note'))]);
+        R1.push([cell('Padded Reverse'), seqCell(getText('pad-rev-seq')), cell(getText('pad-rev-bp'))]);
+        R1.push([cell(''),              cell(getText('pad-rev-tm-note'))]);
+      }
+      R1.push([]);
+    }
+
+    const sumFwd=getText('summary-fwd-seq');
+    if(sumFwd&&!sumFwd.includes('calculate')){
+      R1.push([cell('FINAL PRIMER SEQUENCES', S_SECT)]);
+      R1.push([cell('Final Forward'), seqCell(sumFwd),            cell(getText('summary-fwd-bp'))]);
+      R1.push([cell(''),             cell(getText('summary-fwd-note'))]);
+      R1.push([cell('Final Reverse'), seqCell(getText('summary-rev-seq')), cell(getText('summary-rev-bp'))]);
+      R1.push([cell(''),             cell(getText('summary-rev-note'))]);
+    }
+  }
+
+  R1.push([]);
+  R1.push([cell('Key: bold = tag sequence | italic = restriction site | underline = RC stop codon')]);
+
+  const ws1 = buildSheet(R1);
+  ws1['!cols']=[{wch:30},{wch:70},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Summary');
+
+  // ── Sheet 2: Primers ──────────────────────────────────────────────────
+  const R2 = [];
+  R2.push([cell('Primer',S_HEAD), cell('Sequence',S_HEAD), cell('Length (bp)',S_HEAD), cell('Tm (°C)',S_HEAD), cell('Notes',S_HEAD)]);
+  const sumFwd2=getText('summary-fwd-seq');
+  const sumRev2=getText('summary-rev-seq');
+  if(sumFwd2&&!sumFwd2.includes('calculate')){
+    R2.push([cell('Final Forward'), seqCell(sumFwd2), cell(getText('summary-fwd-bp')), cell(''), cell(getText('summary-fwd-note'))]);
+    R2.push([cell('Final Reverse'), seqCell(sumRev2), cell(getText('summary-rev-bp')), cell(''), cell(getText('summary-rev-note'))]);
+  }else if(getText('final-fwd-seq')&&!getText('final-fwd-seq').includes('apply')){
+    R2.push([cell('Forward (no pad)'), seqCell(getText('final-fwd-seq')), cell(getText('final-fwd-bp')), cell(getText('tm-fwd-val')), cell(currentFwdRSName?'RS: '+currentFwdRSName:'')]);
+    R2.push([cell('Reverse (no pad)'), seqCell(getText('final-rev-seq')), cell(getText('final-rev-bp')), cell(getText('tm-rev-val')), cell((currentTagName?'Tag: '+currentTagName+' ':'')+(currentRevRSName?'RS: '+currentRevRSName:''))]);
+  }
+  R2.push([]);
+  R2.push([cell('Key: bold = tag | italic = restriction site | underline = RC stop codon')]);
+  const ws2 = buildSheet(R2);
+  ws2['!cols']=[{wch:20},{wch:70},{wch:14},{wch:12},{wch:45}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Primers');
+
+  // ── Sheet 3: Sequences ────────────────────────────────────────────────
+  const R3 = [];
+  R3.push([cell('Sequences — '+( currentGeneName||''), S_HEAD)]);
+  R3.push([]);
+  if(currentUpstreamSeq){
+    R3.push([cell('Upstream Flank ('+getText('up-bp-label')+')', S_SECT)]);
+    R3.push([cell(currentUpstreamSeq)]);
+    R3.push([]);
+  }
+  if(currentCDSSeq){
+    R3.push([cell('CDS ('+getText('gene-bp-label')+')', S_SECT)]);
+    R3.push([cell(currentCDSSeq)]);
+    R3.push([]);
+  }
+  if(currentDownstreamSeq){
+    R3.push([cell('Downstream Flank ('+getText('down-bp-label')+')', S_SECT)]);
+    R3.push([cell(currentDownstreamSeq)]);
+    R3.push([]);
+  }
+  const fasta=getText('combined-out');
+  if(fasta){
+    R3.push([cell('Combined FASTA', S_SECT)]);
+    R3.push([cell(fasta)]);
+  }
+  const ws3 = buildSheet(R3);
+  ws3['!cols']=[{wch:100}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Sequences');
+
+  XLSX.writeFile(wb,fname+'.xlsx');
+}
+
+// ══════════════════════════════════════════
+// DNA Cleaner
+// ══════════════════════════════════════════
+let lastCleanedSeq='';
+document.getElementById('clean-btn').addEventListener('click',()=>{
+  const raw=document.getElementById('cleaner-input').value;if(!raw.trim())return;
+  const noHeaders=raw.replace(/^>.*$/gm,'');
+  const atgcOnly=noHeaders.toUpperCase().replace(/[^ATGC]/g,'');
+  lastCleanedSeq=atgcOnly;
+  const wrap=document.getElementById('wrap-output').checked;
+  document.getElementById('cleaner-output-seq').textContent=atgcOnly.length?(wrap?wrapSeq(atgcOnly):atgcOnly):'(no ATGC characters found)';
+  document.getElementById('cleaner-bp-label').textContent=atgcOnly.length?atgcOnly.length.toLocaleString()+' bp':'';
+  const rawLen=noHeaders.replace(/\s/g,'').length;
+  const removed=rawLen-atgcOnly.length;
+  const pct=rawLen>0?((atgcOnly.length/rawLen)*100).toFixed(1):'0.0';
+  const counts={A:0,T:0,G:0,C:0};for(const ch of atgcOnly)counts[ch]++;
+  const gcPct=atgcOnly.length?(((counts.G+counts.C)/atgcOnly.length)*100).toFixed(1):'—';
+  document.getElementById('cs-kept').textContent=atgcOnly.length.toLocaleString();
+  document.getElementById('cs-removed').textContent=removed.toLocaleString();
+  document.getElementById('cs-pct').textContent=pct+'%';
+  document.getElementById('cs-a').textContent=counts.A.toLocaleString();
+  document.getElementById('cs-t').textContent=counts.T.toLocaleString();
+  document.getElementById('cs-g').textContent=counts.G.toLocaleString();
+  document.getElementById('cs-c').textContent=counts.C.toLocaleString();
+  document.getElementById('cs-gc').textContent=gcPct+'%';
+  document.getElementById('cleaner-stats-row').style.display='flex';
+  if(document.getElementById('send-to-full').checked){document.getElementById('full-seq').value=wrap?wrapSeq(atgcOnly):atgcOnly;}
+});
+document.getElementById('clear-cleaner-btn').addEventListener('click',()=>{
+  document.getElementById('cleaner-input').value='';
+  document.getElementById('cleaner-output-seq').innerHTML='<span style="color:var(--text-muted);font-style:italic;">cleaned sequence appears here</span>';
+  document.getElementById('cleaner-bp-label').textContent='';
+  document.getElementById('cleaner-stats-row').style.display='none';
+  lastCleanedSeq='';
+});
+function cleanerCopy(){
+  if(!lastCleanedSeq)return;
+  navigator.clipboard.writeText(lastCleanedSeq).then(()=>{
+    const btn=document.getElementById('cleaner-copy-btn');
+    btn.textContent='copied!';btn.style.color='var(--purple)';
+    setTimeout(()=>{btn.textContent='copy';btn.style.color='';},1500);
+  });
+}
+
+// Init library selects on load
+window.addEventListener('DOMContentLoaded',()=>{
+  refreshLibSelect('tag');
+  refreshLibSelect('rs-fwd');
+  refreshLibSelect('rs-rev');
+  // Wire temp field live sync
+  ['tag-temp-name','tag-temp-seq'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('input',()=>syncTempFields('tag'));
+  });
+  ['rs-fwd-temp-name','rs-fwd-temp-seq'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('input',()=>syncTempFields('rs-fwd'));
+  });
+  ['rs-rev-temp-name','rs-rev-temp-seq'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('input',()=>syncTempFields('rs-rev'));
+  });
+});
+</script>
+</body>
+</html>
